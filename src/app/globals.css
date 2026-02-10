@@ -1,0 +1,187 @@
+@import 'tailwindcss';
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter/Inter_18pt-Light.ttf') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter/Inter_18pt-Regular.ttf') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter/Inter_18pt-Medium.ttf') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter/Inter_18pt-Bold.ttf') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --background: #f9f9f9;
+  --foreground: #0d0d0d;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --font-sans: 'Inter', sans-serif;
+
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.5;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+header {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+p {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+small,
+.text-small {
+  font-size: 0.875rem;
+}
+
+.caption,
+.text-caption {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* Linux Font Rendering Fix */
+@supports (font-smooth: antialiased) {
+  html {
+    font-smooth: always;
+  }
+}
+
+html {
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+::selection {
+  background-color: #bddcf4;
+}
+
+button:focus {
+  outline: none;
+}
+
+.checkbox-wrapper {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  border: 1px solid #1c1b1f;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkbox-wrapper input {
+  appearance: none;
+  outline: none !important;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  background: transparent;
+}
+
+/* when checked */
+.checkbox-wrapper:has(input:checked) {
+  border-color: #0d99ff;
+}
+
+.checkbox-wrapper input:checked::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: #0d99ff;
+}
+
+.checkbox-wrapper svg {
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes wave {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-2px); /* 👈 VERY LOW WAVE */
+    opacity: 1;
+  }
+}
+
+.wave-letter {
+  display: inline-block;
+  animation: wave 1.4s ease-in-out infinite;
+}
