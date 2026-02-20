@@ -73,12 +73,7 @@ export default function Sidebar({
                 ${collapsed ? 'opacity-100' : 'opacity-100 pointer-events-none'}
               `}
             >
-              <Image
-                src="/admin-ellipse.svg"
-                alt="Logo"
-                width={22}
-                height={24}
-              />
+              <Image src="/ellipse.svg" alt="Logo" width={22} height={24} />
             </button>
 
             {/* Text logo */}
@@ -87,7 +82,7 @@ export default function Sidebar({
                 collapsed ? 'opacity-0 w-0' : 'opacity-100 w-[69px]'
               }`}
             >
-              <Image src="/admin-logo.svg" alt="Logo" width={69} height={22} />
+              <Image src="/logo.svg" alt="Logo" width={69} height={22} />
             </div>
           </div>
 
@@ -106,7 +101,7 @@ export default function Sidebar({
         {/* Navigation */}
         <nav className="flex flex-col gap-[7px]">
           {navItems.map(({ label, icon, href }) => {
-            const active = pathname === href;
+            const active = pathname.startsWith(href);
             return (
               <Link
                 key={label}

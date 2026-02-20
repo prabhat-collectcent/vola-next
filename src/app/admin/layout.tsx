@@ -21,7 +21,7 @@ export default function AdminLayout({
       <div className="flex flex-col flex-1 h-full overflow-hidden">
         <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
-        <main className="flex-1 overflow-y-auto bg-white transition-all duration-300">
+        <main className="flex-1 overflow-y-auto transition-all duration-300">
           <ProtectedRoute>
             <div className="mx-auto">{children}</div>
           </ProtectedRoute>

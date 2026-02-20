@@ -1,5 +1,6 @@
-import React from 'react';
+// app/admin/campaign/page.tsx
+import CampaignPage from './CampaignPage';
 
 export default function Campaign() {
-  return <div className=""></div>;
+  return <CampaignPage />;
 }

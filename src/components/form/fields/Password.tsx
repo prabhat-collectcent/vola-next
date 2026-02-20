@@ -45,17 +45,17 @@ export default function PasswordInput({
           onChange={onChange}
           required={required}
           className={`w-full h-[37px] text-xs
-               bg-white
-               rounded-[93px]
-               px-3 py-2.5
-               outline outline-[0.75px] outline-offset-[-0.75px]
-               placeholder-[#00000099]
-               transition
-               ${
-                 error
-                   ? 'outline-red-400'
-                   : 'outline-[#79747EA8] focus:outline-[#4144E6]'
-               }`}
+            bg-white
+            rounded-[93px]
+            px-3 py-2.5 pr-9
+            border
+            placeholder-[#00000099]
+            transition-all
+            ${
+              error
+                ? 'border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-400'
+                : 'border-[#79747EA8] focus:border-[#4144E6] focus:ring-1 focus:ring-[#4144E6]'
+            }`}
         />
 
         <button

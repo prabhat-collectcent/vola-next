@@ -6,6 +6,7 @@ import Image from 'next/image';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import LogoutIcon from '@mui/icons-material/Logout';
+import MyAccountModal from '@/components/admin/modals/MyAccountModal';
 
 export default function Header({
   onToggleSidebar,
@@ -18,6 +19,7 @@ export default function Header({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [showBalance, setShowBalance] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const [showAccountModal, setShowAccountModal] = useState(false);
 
   const userProfile = {
     name: 'Prabhat',
@@ -189,7 +191,13 @@ export default function Header({
 
                 {/* Menu items */}
                 <div className="flex flex-col gap-3">
-                  <button className="flex items-center gap-2.5 text-xs text-black cursor-pointer">
+                  <button
+                    onClick={() => {
+                      setShowAccountModal(true);
+                      setShowProfile(false);
+                    }}
+                    className="flex items-center gap-2.5 text-xs text-black cursor-pointer"
+                  >
                     <PersonOutlineIcon sx={{ fontSize: 16 }} />
                     My Account
                   </button>
@@ -213,6 +221,10 @@ export default function Header({
           )}
         </div>
       </div>
+
+      {showAccountModal && (
+        <MyAccountModal onClose={() => setShowAccountModal(false)} />
+      )}
     </header>
   );
 }

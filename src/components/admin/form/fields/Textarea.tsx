@@ -2,41 +2,51 @@
 
 import React from 'react';
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string; // 🔥 Now optional
+interface TextareaProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label?: string;
   name: string;
   error?: string;
 }
 
-export default function Input({
+export default function Textarea({
   label,
   name,
-  type = 'text',
   placeholder = '',
   value,
   onChange,
   onKeyDown,
   error,
   required = false,
+  rows = 3,
   ...rest
-}: InputProps) {
-  const inputId = `input-${name}`;
+}: TextareaProps) {
+  const textareaId = `textarea-${name}`;
 
   return (
-    <div className="w-full mb-[12px]">
-      <input
-        id={inputId}
+    <div className="w-full">
+      {label && (
+        <label
+          htmlFor={textareaId}
+          className="block text-xs text-stone-900 mb-1"
+        >
+          {label}
+        </label>
+      )}
+
+      <textarea
+        id={textareaId}
         name={name}
-        type={type}
         value={value}
         placeholder={placeholder}
         onChange={onChange}
         onKeyDown={onKeyDown}
         required={required}
+        rows={rows}
         {...rest}
-        className={`w-full h-[37px] text-xs
+        className={`w-full text-xs resize-none
           bg-white
-          rounded-[93px]
+          rounded-xl
           px-3 py-2.5
           border
           placeholder-[#00000099]
@@ -48,7 +58,11 @@ export default function Input({
           }`}
       />
 
-      {error && <div className="text-[11px] text-red-400 mt-1">{error}</div>}
+      {error && (
+        <div className="text-[11px] text-red-400 mt-1">
+          {error}
+        </div>
+      )}
     </div>
   );
 }
