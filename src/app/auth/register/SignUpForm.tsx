@@ -1,15 +1,24 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { useActionState, useState, startTransition } from 'react';
+import { signupSchema } from "@/lib/validations/signup";
+import { useRef } from "react";
 import FormTextField from '@/components/form/fields/Text';
 import FormPasswordField from '@/components/form/fields/Password';
 import Link from 'next/link';
 import { useToast } from '@/components/toast/ToastProvider';
 import Submit from '@/components/form/Submit';
+import { signupAction } from './actions';
 
 export default function SignUpForm() {
+
+  const [state, formAction, isPending] = useActionState(signupAction, {});
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const formRef = useRef<HTMLFormElement>(null);
+
+
   const router = useRouter();
   const { showToast } = useToast();
 
@@ -20,70 +29,41 @@ export default function SignUpForm() {
   const [repeatPassword, setRepeatPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const [errors, setErrors] = useState<{
-    firstname?: string;
-    lastname?: string;
-    email?: string;
-    password?: string;
-    repeatPassword?: string;
-  }>({});
+  const validateForm = () => {
+    const data = { firstname, lastname, email, password, repeatPassword };
 
-  const getPasswordStrength = () => {
-    let score = 0;
-    if (password.length >= 8) score++;
-    if (/[a-zA-Z]/.test(password)) score++;
-    if (/[0-9]/.test(password)) score++;
-    if (/[^a-zA-Z0-9]/.test(password)) score++;
-    return score;
+    const result = signupSchema.safeParse(data);
+
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+
+      result.error.issues.forEach((err) => {
+        const key = String(err.path[0]);
+        fieldErrors[key] = err.message;
+      });
+
+      setErrors(fieldErrors);
+      return false;
+    }
+
+    setErrors({});
+    return true;
   };
 
-  const strength = getPasswordStrength();
 
-  const repeatError =
-    repeatPassword.length > 0 && repeatPassword !== password
-      ? 'Passwords do not match'
-      : '';
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const newErrors: typeof errors = {};
+    if (!validateForm()) return;
 
-    if (!firstname) newErrors.firstname = 'Firstname is required';
-    if (!lastname) newErrors.lastname = 'Lastname is required';
-
-    if (!email) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(email))
-      newErrors.email = 'Enter a valid email';
-
-    if (strength < 4)
-      newErrors.password =
-        'Password must include letters, numbers, and symbols, min 8 chars.';
-
-    if (repeatPassword !== password)
-      newErrors.repeatPassword = 'Passwords do not match';
-
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return;
-
-    setLoading(true);
-
-    const result = await signIn('credentials', {
-      email,
-      password,
-      type: 'signup',
-      redirect: false,
-    });
-
-    setLoading(false);
-
-    if (result?.error) {
-      showToast(result.error, 'error');
-    } else {
-      showToast('Registered successfully', 'success');
-      router.replace('/auth/login');
+    if (formRef.current) {
+      startTransition(() => {
+        formAction(new FormData(formRef.current!));
+      });
     }
   };
+
+
 
   return (
     <div className="w-full flex justify-center items-center px-4 relative">
@@ -101,14 +81,24 @@ export default function SignUpForm() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-[18px]">
+        <form ref={formRef} onSubmit={handleSubmit}
+          className="space-y-[18px]">
+
+          {/* Server Error Message */}
+          {state.error && (
+            <div className="rounded bg-red-100 p-3 text-sm text-red-600">
+              {state.error}
+            </div>
+          )}
+
           <FormTextField
             label=""
             name="firstname"
             placeholder="First Name"
             value={firstname}
             onChange={(e) => setFirstname(e.target.value)}
-            error={errors.firstname}
+            error={errors.firstname || state.fieldErrors?.firstname}
+
           />
 
           <FormTextField
@@ -117,7 +107,7 @@ export default function SignUpForm() {
             placeholder="Last Name"
             value={lastname}
             onChange={(e) => setLastname(e.target.value)}
-            error={errors.lastname}
+            error={errors.lastname || state.fieldErrors?.lastname}
           />
 
           <FormTextField
@@ -126,7 +116,7 @@ export default function SignUpForm() {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            error={errors.email}
+            error={errors.email || state.fieldErrors?.email}
           />
 
           <FormPasswordField
@@ -135,7 +125,7 @@ export default function SignUpForm() {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            error={errors.password}
+            error={errors.password || state.fieldErrors?.password}
           />
 
           <FormPasswordField
@@ -144,11 +134,11 @@ export default function SignUpForm() {
             placeholder="Confirm Password"
             value={repeatPassword}
             onChange={(e) => setRepeatPassword(e.target.value)}
-            error={errors.repeatPassword || repeatError}
+            error={errors.repeatPassword || state.fieldErrors?.repeatPassword}
           />
 
           <div className="flex justify-center">
-            <Submit text="Sign up" loading={loading} />
+            <Submit text="Sign up" loading={isPending} />
           </div>
         </form>
 

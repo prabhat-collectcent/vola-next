@@ -4,6 +4,11 @@ import React, { useState } from 'react';
 import Select from '@/components/admin/form/fields/Select';
 import RadioGroup from '@/components/admin/form/fields/RadioGroup';
 import Checkbox from '@/components/admin/form/fields/Checkbox';
+import Text from '@/components/admin/form/fields/Text';
+import { useCampaign } from '../context/CampaignContext';
+import LocationSearchBox from '@/components/admin/form/LocationSearchBox';
+import IpExclusionBox from '@/components/admin/form/IPExclusionBox';
+import CarrierBox from '@/components/admin/form/CarrierBox';
 
 interface Props {
   onNext: () => void;
@@ -18,13 +23,17 @@ export default function Targeting({
   isDisabled,
   onToggle,
 }: Props) {
+
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const { state, dispatch } = useCampaign()
+
   const [activeTab, setActiveTab] = useState<'geo' | 'device' | 'adtype'>(
     'geo'
   );
 
   /* GEO */
   const [country, setCountry] = useState('');
-  const [state, setState] = useState('');
+  // const [state, setState] = useState('');
   const [geoMode, setGeoMode] = useState('include');
   const [ipMode, setIpMode] = useState('include');
   const [internet, setInternet] = useState(true);
@@ -76,11 +85,10 @@ export default function Targeting({
 
       {/* Body */}
       <div
-        className={`transition-all duration-300 ease-in-out ${
-          isActive
-            ? 'opacity-100 translate-y-0 mt-6'
-            : 'opacity-0 -translate-y-2 hidden'
-        }`}
+        className={`transition-all duration-300 ease-in-out ${isActive
+          ? 'opacity-100 translate-y-0 mt-6'
+          : 'opacity-0 -translate-y-2 hidden'
+          }`}
       >
         {/* Tabs */}
         <div className="flex justify-between gap-10 border-b border-neutral-200 mb-6">
@@ -94,11 +102,10 @@ export default function Targeting({
               onClick={() =>
                 setActiveTab(tab.key as 'geo' | 'device' | 'adtype')
               }
-              className={`pb-3 text-sm ${
-                activeTab === tab.key
-                  ? 'text-[#4144E6] border-b-2 border-[#4144E6]'
-                  : 'text-neutral-600'
-              }`}
+              className={`pb-3 text-sm ${activeTab === tab.key
+                ? 'text-[#4144E6] border-b-2 border-[#4144E6]'
+                : 'text-neutral-600'
+                }`}
             >
               {tab.label}
             </button>
@@ -108,78 +115,12 @@ export default function Targeting({
         {/* GEO TAB */}
         {activeTab === 'geo' && (
           <div className="flex flex-col">
-            <Select
-              label="Countries"
-              name="country"
-              value={country}
-              onChange={(val: string) => setCountry(val)}
-              placeholder="Select Country"
-              className="mb-[24px]"
-              options={[
-                { label: 'India', value: 'IN' },
-                { label: 'United States', value: 'US' },
-              ]}
-            />
+            <LocationSearchBox title="Include locations" type="include" />
+            <LocationSearchBox title="Exclude locations" type="exclude" />
+            <IpExclusionBox/>
+            <CarrierBox/>
 
-            <RadioGroup
-              label=""
-              value={geoMode}
-              onChange={setGeoMode}
-              className="mb-[24px]"
-              options={[
-                { label: 'Include', value: 'include' },
-                { label: 'Exclude', value: 'exclude' },
-              ]}
-            />
-
-            <div className="flex gap-3">
-              <Select
-                label="Country"
-                name="country2"
-                value={country}
-                onChange={(val: string) => setCountry(val)}
-                placeholder="Country"
-                className="mb-[24px]"
-                options={[
-                  { label: 'India', value: 'IN' },
-                  { label: 'United States', value: 'US' },
-                ]}
-              />
-
-              <Select
-                label="State"
-                name="state"
-                value={state}
-                className="mb-[24px]"
-                onChange={(val: string) => setState(val)}
-                placeholder="State"
-                options={[
-                  { label: 'Delhi', value: 'DL' },
-                  { label: 'California', value: 'CA' },
-                ]}
-              />
-            </div>
-
-            <RadioGroup
-              label="IP Range"
-              value={ipMode}
-              onChange={setIpMode}
-              className="mb-[24px]"
-              options={[
-                { label: 'Include', value: 'include' },
-                { label: 'Exclude', value: 'exclude' },
-              ]}
-            />
-
-            <div className="flex flex-col gap-3 mb-[24px]">
-              <Checkbox
-                label="Internet"
-                checked={internet}
-                onChange={setInternet}
-              />
-              <Checkbox label="Mobile" checked={mobile} onChange={setMobile} />
-              <Checkbox label="Wifi" checked={wifi} onChange={setWifi} />
-            </div>
+    
           </div>
         )}
 
@@ -213,7 +154,7 @@ export default function Targeting({
               label=""
               name="deviceType"
               value=""
-              onChange={() => {}}
+              onChange={() => { }}
               placeholder="All"
               options={[
                 { label: 'All', value: 'all' },

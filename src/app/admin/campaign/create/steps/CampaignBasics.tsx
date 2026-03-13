@@ -4,12 +4,15 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Text from '@/components/admin/form/fields/Text';
 import Select from '@/components/admin/form/fields/Select';
+import { useCampaign } from '../context/CampaignContext';
+import { CampaignBasicSchema } from '@/lib/validations/camapaign.validation';
 
 interface Props {
   onNext: () => void;
   isActive: boolean;
   isDisabled?: boolean;
   onToggle: () => void;
+
 }
 
 export default function CampaignBasics({
@@ -28,6 +31,43 @@ export default function CampaignBasics({
   const [platform, setPlatform] = useState('');
   const [adType, setAdType] = useState<'display' | 'video' | 'ctv'>('');
   const [attribution, setAttribution] = useState<string>('');
+
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const { state, dispatch } = useCampaign()
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+    dispatch({
+      type: "SET_FIELD",
+      payload: {
+        name: e.target.value
+      }
+    })
+  }
+
+  function handleNextStep() {
+
+
+    const result = CampaignBasicSchema.safeParse({ name: state.name });
+    console.log("validation result", result)
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+
+      result.error.issues.forEach((err) => {
+        const key = String(err.path[0]);
+        fieldErrors[key] = err.message;
+      });
+      
+      setErrors(fieldErrors);      
+      return;
+
+    }
+    onNext();
+  }
+
+
+
 
   if (isDisabled) {
     return (
@@ -60,11 +100,10 @@ export default function CampaignBasics({
 
       {/* Animated Body */}
       <div
-        className={`transition-all duration-300 ease-in-out ${
-          isActive
-            ? 'opacity-100 translate-y-0 mt-6'
-            : 'opacity-0 -translate-y-2 hidden'
-        }`}
+        className={`transition-all duration-300 ease-in-out ${isActive
+          ? 'opacity-100 translate-y-0 mt-6'
+          : 'opacity-0 -translate-y-2 hidden'
+          }`}
       >
         <div className="flex flex-col gap-6 pt-6 pb-2">
           {/* Objectives */}
@@ -91,11 +130,10 @@ export default function CampaignBasics({
                   onClick={() =>
                     setObjective(item.key as 'branding' | 'performance')
                   }
-                  className={`flex-1 h-32 px-3 py-2.5 rounded-xl cursor-pointer flex flex-col gap-2 ${
-                    objective === item.key
-                      ? 'outline outline-1 outline-[#4144E6]'
-                      : 'outline outline-1 outline-neutral-700/20'
-                  }`}
+                  className={`flex-1 h-32 px-3 py-2.5 rounded-xl cursor-pointer flex flex-col gap-2 ${objective === item.key
+                    ? 'outline outline-1 outline-[#4144E6]'
+                    : 'outline outline-1 outline-neutral-700/20'
+                    }`}
                 >
                   <Image
                     src={item.icon}
@@ -105,9 +143,8 @@ export default function CampaignBasics({
                   />
 
                   <div
-                    className={`text-base ${
-                      objective === item.key ? 'font-semibold' : ''
-                    }`}
+                    className={`text-base ${objective === item.key ? 'font-semibold' : ''
+                      }`}
                   >
                     {item.label}
                   </div>
@@ -125,10 +162,12 @@ export default function CampaignBasics({
                 <Text
                   label="Campaign Name*"
                   name="campaignName"
-                  value={campaignName}
-                  onChange={(val: string) => setCampaignName(val)}
+                  value={state.name}
+                  onChange={handleChange}
                   placeholder="Enter Campaign Name"
                   className="mb-[24px]"
+                  error={errors.name}
+
                 />
 
                 <Text
@@ -152,11 +191,10 @@ export default function CampaignBasics({
                       onClick={() =>
                         setAdType(item.key as 'display' | 'video' | 'ctv')
                       }
-                      className={`flex-1 p-3 rounded-xl cursor-pointer flex flex-col items-center ${
-                        adType === item.key
-                          ? 'outline outline-[0.75px] outline-[#4144E6]'
-                          : 'outline outline-[0.75px] outline-zinc-500/20'
-                      }`}
+                      className={`flex-1 p-3 rounded-xl cursor-pointer flex flex-col items-center ${adType === item.key
+                        ? 'outline outline-[0.75px] outline-[#4144E6]'
+                        : 'outline outline-[0.75px] outline-zinc-500/20'
+                        }`}
                     >
                       <div className="w-12 h-12 relative">
                         <Image
@@ -222,11 +260,10 @@ export default function CampaignBasics({
                       <div
                         key={item.key}
                         onClick={() => setAttribution(item.key)}
-                        className={`w-28 rounded-xl flex items-center justify-center cursor-pointer ${
-                          attribution === item.key
-                            ? 'outline outline-1 outline-[#4144E6]'
-                            : 'outline outline-1 outline-zinc-100'
-                        }`}
+                        className={`w-28 rounded-xl flex items-center justify-center cursor-pointer ${attribution === item.key
+                          ? 'outline outline-1 outline-[#4144E6]'
+                          : 'outline outline-1 outline-zinc-100'
+                          }`}
                       >
                         <Image
                           src={item.src}
@@ -250,7 +287,7 @@ export default function CampaignBasics({
           {/* Next */}
           <div className="flex justify-end">
             <button
-              onClick={onNext}
+              onClick={handleNextStep}
               className="px-4 py-2 bg-indigo-800 rounded-full text-white text-sm"
             >
               Next

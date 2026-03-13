@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { loginSchema } from "@/lib/validations/login";
 import Link from 'next/link';
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
@@ -20,35 +21,51 @@ export default function SignInForm() {
   );
   const [loading, setLoading] = useState(false);
 
+  const validateForm = () => {
+    const data = { email, password };
+
+    const result = loginSchema.safeParse(data);
+
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+
+      result.error.issues.forEach((err) => {
+        const key = String(err.path[0]);
+        fieldErrors[key] = err.message;
+      });
+
+      setErrors(fieldErrors);
+      console.log(fieldErrors);
+
+      return false;
+    }
+
+    setErrors({});
+    return true;
+  };
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const newErrors: typeof errors = {};
-    if (!email) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(email))
-      newErrors.email = 'Enter a valid email';
-
-    if (!password) newErrors.password = 'Password is required';
-
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return;
+    if (!validateForm()) return;
 
     setLoading(true);
-
     const result = await signIn('credentials', {
       email,
       password,
-      type: 'login',
       redirect: false,
+      callbackUrl:'/admin/dashboard/home'
     });
 
     setLoading(false);
 
-    if (result?.error) {
-      showToast(result.error || 'Signin failed', 'error');
-    } else {
+
+    if (result?.ok) {
       showToast('User logged in successfully!', 'success');
       router.replace('/admin/dashboard');
+    } else {
+      showToast(result?.error || 'Signin failed', 'error');
     }
   };
 

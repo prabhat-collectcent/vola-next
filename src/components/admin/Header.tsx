@@ -7,6 +7,7 @@ import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MyAccountModal from '@/components/admin/modals/MyAccountModal';
+import { signOut } from 'next-auth/react';
 
 export default function Header({
   onToggleSidebar,
@@ -27,6 +28,12 @@ export default function Header({
     id: '1',
     avatar: '/profile-avatar.svg',
   };
+
+  function handleLogout() {
+        signOut({
+      callbackUrl: "/auth/login",
+    });
+  }
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -211,7 +218,10 @@ export default function Header({
 
                   <div className="h-px bg-gray-200" />
 
-                  <button className="flex items-center gap-2.5 text-xs text-black cursor-pointer">
+                  <button onClick={() => {
+                    handleLogout();
+                  }}
+                    className="flex items-center gap-2.5 text-xs text-black cursor-pointer">
                     <LogoutIcon sx={{ fontSize: 16 }} />
                     Log Out
                   </button>

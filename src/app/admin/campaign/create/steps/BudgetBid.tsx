@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import Text from '@/components/admin/form/fields/Text';
 import Select from '@/components/admin/form/fields/Select';
+import { useCampaign } from '../context/CampaignContext';
+import { CampaignBudgetSchema } from '@/lib/validations/camapaign.validation';
 
 interface Props {
   isActive: boolean;
@@ -16,6 +18,45 @@ export default function BudgetBid({ isActive, isDisabled, onToggle }: Props) {
   const [bidType, setBidType] = useState('');
   const [amount, setAmount] = useState('');
   const [dailyCap, setDailyCap] = useState('');
+
+  const { state, dispatch } = useCampaign()
+
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+    dispatch({
+      type: "SET_FIELD",
+      payload: {
+        ...state,
+        [e.target.name]: (e.target.type === 'number' && e.target.value) ? parseFloat(e.target.value) : e.target.value
+      }
+    })
+  }
+
+  function handleNextStep() {
+    console.log("current state", state)
+    const result = CampaignBudgetSchema.safeParse({ budget: state.budget, bid_value: state.bid_value });
+    console.log("validation result", result)
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+
+      result.error.issues.forEach((err) => {
+        const key = String(err.path[0]);
+        fieldErrors[key] = err.message;
+      });
+
+      setErrors(fieldErrors);
+      return;
+
+    }
+
+    setErrors({})
+  }
+
+
 
   if (isDisabled) {
     return (
@@ -48,31 +89,33 @@ export default function BudgetBid({ isActive, isDisabled, onToggle }: Props) {
 
       {/* Animated Body */}
       <div
-        className={`transition-all duration-300 ease-in-out ${
-          isActive
-            ? 'opacity-100 translate-y-0 mt-6'
-            : 'opacity-0 -translate-y-2 hidden'
-        }`}
+        className={`transition-all duration-300 ease-in-out ${isActive
+          ? 'opacity-100 translate-y-0 mt-6'
+          : 'opacity-0 -translate-y-2 hidden'
+          }`}
       >
         <div className="flex flex-col">
           {/* Budgets */}
           <div className="flex gap-3">
-            <Text
+            {/* <Text
               label="Total Budget"
               name="totalBudget"
               value={totalBudget}
               onChange={(val: string) => setTotalBudget(val)}
               placeholder="Total Budget"
               className="mb-[24px]"
-            />
+            /> */}
 
             <Text
+              type='number'
               label="Daily Budget"
-              name="dailyBudget"
-              value={dailyBudget}
-              onChange={(val: string) => setDailyBudget(val)}
+              name="budget"
+              value={state.budget || ''}
+              onChange={handleChange}
               placeholder="Daily Budget"
               className="mb-[24px]"
+              error={errors.budget}
+              step="any"
             />
           </div>
 
@@ -81,36 +124,50 @@ export default function BudgetBid({ isActive, isDisabled, onToggle }: Props) {
             <Select
               label="Bid"
               name="bidType"
-              value={bidType}
-              onChange={(val: string) => setBidType(val)}
+              value="cpm"
+              // onChange={handleChange}
               placeholder="CPM"
               className="mb-[24px]"
               options={[
-                { label: 'CPM', value: 'cpm' },
-                { label: 'CPC', value: 'cpc' },
-                { label: 'CPA', value: 'cpa' },
+                { label: 'CPM', value: 'cpm' }
               ]}
             />
 
             <Text
+              type='number'
               label="Amount"
-              name="amount"
-              value={amount}
-              onChange={(val: string) => setAmount(val)}
+              name="bid_value"
+              value={state.bid_value || ''}
+              onChange={handleChange}
               className="mb-[24px]"
               placeholder="Amount"
+              error={errors.bid_value}
+              step="any"
+
+
             />
           </div>
 
+          {/* Next */}
+          <div className="flex justify-end">
+            <button
+              onClick={handleNextStep}
+              className="px-4 py-2 bg-indigo-800 rounded-full text-white text-sm"
+            >
+              Next
+            </button>
+          </div>
+
+
           {/* Daily Conversion Cap */}
-          <Text
+          {/* <Text
             label="Daily Conversion Cap"
             name="dailyCap"
             value={dailyCap}
             onChange={(val: string) => setDailyCap(val)}
             placeholder="Daily Conversion Cap"
             className="mb-[24px]"
-          />
+          /> */}
         </div>
       </div>
     </div>

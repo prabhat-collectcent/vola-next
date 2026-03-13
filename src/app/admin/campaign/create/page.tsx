@@ -1,5 +1,11 @@
 import CampaignCreatePage from './CampaignCreatePage';
+import { CampaignProvider } from './context/CampaignContext';
 
 export default function CreateCampaign() {
-  return <CampaignCreatePage />;
+
+  return (
+    <CampaignProvider>
+      <CampaignCreatePage />
+    </CampaignProvider>
+  )
 }

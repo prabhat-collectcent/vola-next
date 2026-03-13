@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import DateField from '@/components/admin/form/fields/Date';
 import Select from '@/components/admin/form/fields/Select';
 import RadioGroup from '@/components/admin/form/fields/RadioGroup';
+import { useCampaign } from '../context/CampaignContext';
 
 interface Props {
   onNext: () => void;
@@ -18,6 +19,20 @@ export default function Schedule({
   isDisabled,
   onToggle,
 }: Props) {
+
+  const { state, dispatch } = useCampaign()
+
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+    dispatch({
+      type: "SET_FIELD",
+      payload: {
+        [e.target.name]: e.target.value
+      }
+    })
+  }
+
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [dayParting, setDayParting] = useState('all');
@@ -56,26 +71,25 @@ export default function Schedule({
 
       {/* Animated Body */}
       <div
-        className={`transition-all duration-300 ease-in-out ${
-          isActive
-            ? 'opacity-100 translate-y-0 mt-6'
-            : 'opacity-0 -translate-y-2 hidden'
-        }`}
+        className={`transition-all duration-300 ease-in-out ${isActive
+          ? 'opacity-100 translate-y-0 mt-6'
+          : 'opacity-0 -translate-y-2 hidden'
+          }`}
       >
         <div className="flex flex-col gap-6 pb-2">
           <div className="flex gap-3">
             <DateField
               label="Start Date"
               name="startDate"
-              value={startDate}
-              onChange={setStartDate}
+              value={state.start_date}
+              onChange={(e) => console.log("Event start date occured",e)}
             />
 
             <DateField
               label="End Date"
               name="endDate"
-              value={endDate}
-              onChange={setEndDate}
+              value={state.end_date}
+              onChange={(e) => console.log("Event end date occured",e)}
             />
           </div>
 
