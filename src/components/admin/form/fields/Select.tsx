@@ -89,7 +89,7 @@ export default function Select({
           <div
             className={`
               absolute top-[45px] left-0
-              w-full
+              w-full max-h-60 overflow-auto
               bg-white shadow-lg rounded-[13px]
               py-[6px] z-50 border border-[#E6E6E6]
               ${dropdownClassName}
@@ -102,8 +102,7 @@ export default function Select({
                   onChange?.(opt.value);
                   setOpen(false);
                 }}
-                className="
-                  px-[16px] py-[10px] text-sm text-[#333]
+                className="px-[16px] py-[1px] text-sm text-[#333]
                   hover:bg-[#f9f9f9]
                   rounded-[12px] cursor-pointer
                 "

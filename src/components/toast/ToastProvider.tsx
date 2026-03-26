@@ -15,7 +15,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const showToast = (message: string, type: ToastMessage['type']) => {
     const id = Date.now();
-    setToasts((prev) => [...prev, { id, message, type }]);
+
+    // new toast at top
+    setToasts((prev) => [{ id, message, type }, ...prev]);
 
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -30,14 +32,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={{ showToast }}>
       {children}
 
-      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[9999] flex flex-col items-center gap-2">
+      {/*  TOP RIGHT STACK */}
+      <div className="fixed top-5 right-5 z-[9999] flex flex-col gap-3 w-auto max-w-[90vw]">
         {toasts.map((toast) => (
-          <Toast
+          <div
             key={toast.id}
-            message={toast.message}
-            type={toast.type}
-            onClose={() => removeToast(toast.id)}
-          />
+            className="animate-in slide-in-from-right fade-in duration-300"
+          >
+            <Toast
+              message={toast.message}
+              type={toast.type}
+              onClose={() => removeToast(toast.id)}
+            />
+          </div>
         ))}
       </div>
     </ToastContext.Provider>

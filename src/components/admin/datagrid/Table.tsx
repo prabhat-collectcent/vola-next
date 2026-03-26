@@ -14,6 +14,7 @@ interface TableProps {
   sortKey?: string;
   order?: 'asc' | 'desc' | '';
   onSortChange?: (sort: string, order: 'asc' | 'desc' | '') => void;
+  onRowClick?: (row: any) => void;
 }
 
 export default function Table({
@@ -26,6 +27,7 @@ export default function Table({
   sortKey,
   order,
   onSortChange,
+  onRowClick,
 }: TableProps) {
   const handleSort = (key: string) => {
     if (!onSortChange) return;
@@ -47,6 +49,7 @@ export default function Table({
                 type="checkbox"
                 checked={data.length > 0 && data.every((x) => x.checked)}
                 onChange={(e) => toggleAll(e.target.checked)}
+                onClick={(e) => e.stopPropagation()} 
                 disabled={data.length === 0}
               />
               {data.length > 0 && data.every((x) => x.checked) && (
@@ -58,9 +61,8 @@ export default function Table({
           {columns.map((c) => (
             <th
               key={c.key}
-              className={`py-[12px] px-[16px] font-medium ${
-                c.sortable ? 'cursor-pointer select-none' : ''
-              }`}
+              className={`py-[12px] px-[16px] font-medium ${c.sortable ? 'cursor-pointer select-none' : ''
+                }`}
               onClick={() => c.sortable && handleSort(c.key)}
             >
               <div className="flex items-center gap-1">
@@ -96,9 +98,11 @@ export default function Table({
           data.map((row) => (
             <tr
               key={row.id}
-              className={`group border-b border-[#E5E5EA] transition text-[11px] text-[#242424] ${
-                row.checked ? 'bg-[#F3FAFF]' : 'hover:bg-[#F8F8FA]'
-              }`}
+              onClick={() => onRowClick?.(row)}
+              className={`group border-b border-[#E5E5EA] transition text-[11px] text-[#242424]
+    ${row.checked ? 'bg-[#F3FAFF]' : 'hover:bg-[#F8F8FA]'}
+    ${onRowClick ? 'cursor-pointer' : ''}
+  `}
             >
               <td className="py-[12px] px-[16px]">
                 <label className="checkbox-wrapper">
@@ -106,6 +110,7 @@ export default function Table({
                     type="checkbox"
                     checked={row.checked}
                     onChange={() => toggleRow(row.id)}
+                    onClick={(e) => e.stopPropagation()}
                   />
                   {row.checked && (
                     <CheckIcon sx={{ fontSize: 10, color: '#fff' }} />

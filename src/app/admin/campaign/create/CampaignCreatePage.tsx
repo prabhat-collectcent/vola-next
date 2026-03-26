@@ -8,10 +8,15 @@ import StepTargeting from './steps/Targeting';
 import StepBudgetBid from './steps/BudgetBid';
 import { useCampaign } from './context/CampaignContext';
 import { createCampaignAction } from '@/actions/campaign.actions';
+import { useToast } from '@/components/toast/ToastProvider';
+import { useRouter } from 'next/navigation';
 
 export default function CampaignCreatePage() {
 
-  const { state } = useCampaign()
+  const router = useRouter();
+  const { state, dispatch } = useCampaign();
+  const { showToast } = useToast();
+
 
   async function submitCampaign() {
     console.log("final state before submission", state)
@@ -19,19 +24,35 @@ export default function CampaignCreatePage() {
     state.geo_exclude = state.geo_exclude.map((loc) => loc.geoTargetConstant);
     // @ts-ignore
     state.mobile_carriers = state.mobile_carriers.map((carrier) => carrier.resourceName);
-    const res = await createCampaignAction(state);
-    console.log("response object")
-    console.log(res);
+
+
+    try {
+
+      const apiResponse: any = await createCampaignAction(state);
+      console.log("response object")
+      console.log(apiResponse);
+
+
+      if (apiResponse?.success) {
+        const adGroup = "customers/5324834713/adGroups/196059188120" //apiResponse.mutateOperationResponses.find((mutateRes: any) => mutateRes['adGroupResult']);
+        const encodedURI = encodeURIComponent(adGroup) //.adGroupResult.resourceName
+        showToast('Campaign created successfully', 'success');
+        router.push(`/admin/campaign/create/creatives?adGroup=${encodedURI}`)
+      } else {
+        // @ts-ignore
+        showToast(apiResponse?.message || 'Something went wrong', 'error');
+      }
+
+    } catch (error) {
+      showToast((error as Error)?.message || 'Something went wrong', 'error');
+    }
 
   }
 
   const [activeStep, setActiveStep] = useState(1);
 
-  const [campaignName, setCampaignName] = useState('');
   const [campaignUrl, setCampaignUrl] = useState('');
-  const [totalBudget, setTotalBudget] = useState(0);
-  const [bidValue, setBidValue] = useState(0);
-  const [adType, setAdType] = useState<'display' | 'video' | 'ctv'>('');
+  const [adType, setAdType] = useState<'display' | 'video' | 'ctv' | ''>('');
 
   return (
     <div className="flex flex-col bg-[#F8F8FA] min-h-screen">

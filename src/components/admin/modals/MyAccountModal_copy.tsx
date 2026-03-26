@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Text from '@/components/admin/form/fields/Text';
+import Select from '@/components/admin/form/fields/Select';
+import Textarea from '@/components/admin/form/fields/Textarea';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import { getProfileAction, updatePasswordAction, updateProfileAction } from '@/actions/profile.actions';
-import { set } from 'zod';
+import { getProfileAction } from '@/actions/profile.actions';
 
 interface Props {
   onClose: () => void;
@@ -14,31 +15,27 @@ interface Props {
 export default function MyAccountModal({ onClose }: Props) {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile');
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
 
   const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    async function fetchUserProfile() {
+      const result = await getProfileAction();
+      setUser((result as any).data.user);
+    }
+    fetchUserProfile();
+  }, []);
 
   // Profile states
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-
-  useEffect(() => {
-    async function fetchUserProfile() {
-      const result = await getProfileAction();
-      const userData = (result as any).data.user;
-
-      setUser(userData);
-
-      // populate fields
-      setFirstName(userData.firstname || '');
-      setLastName(userData.lastname || '');
-      setEmail(userData.email || '');
-    }
-    fetchUserProfile();
-  }, []);
-
+  const [company, setCompany] = useState('');
+  const [country, setCountry] = useState('');
+  const [timezone, setTimezone] = useState('');
+  const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [zipcode, setZipcode] = useState('');
 
   // Password states
   const [oldPassword, setOldPassword] = useState('');
@@ -50,11 +47,6 @@ export default function MyAccountModal({ onClose }: Props) {
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  useEffect(() => {
-    setIsEditing(false);
-  }, [activeTab]);
-
 
   useEffect(() => {
     if (!mounted) return;
@@ -81,42 +73,15 @@ export default function MyAccountModal({ onClose }: Props) {
     if (!firstName.trim()) newErrors.firstName = 'First name is required';
     if (!lastName.trim()) newErrors.lastName = 'Last name is required';
     if (!email.trim()) newErrors.email = 'Email is required';
-
+    if (!company.trim()) newErrors.company = 'Company is required';
+    if (!country) newErrors.country = 'Country is required';
+    if (!timezone) newErrors.timezone = 'Time zone is required';
+    if (!address.trim()) newErrors.address = 'Address is required';
+    if (!city.trim()) newErrors.city = 'City is required';
+    if (!zipcode.trim()) newErrors.zipcode = 'Zipcode is required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
-  const handleSaveProfile = async () => {
-    if (!validateProfile()) return;
-
-    try {
-      setIsSaving(true);
-
-      const payload = {
-        firstname: firstName,
-        lastname: lastName,
-      };
-
-      const result = await updateProfileAction(payload);
-
-      if ((result as any)?.success) {
-        setUser((prev: any) => ({
-          ...prev,
-          ...payload,
-        }));
-
-        setIsEditing(false);
-      } else {
-        // handle API error response
-        console.error(result);
-      }
-    } catch (error) {
-      console.error('Update profile failed:', error);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
 
   const validatePassword = () => {
     const newErrors: Record<string, string> = {};
@@ -131,36 +96,6 @@ export default function MyAccountModal({ onClose }: Props) {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
-  async function handleSavePassword() {
-    console.log("validating password")
-    if (!validatePassword()) return;
-
-    try {
-
-      const payload = {
-        old_password: oldPassword,
-        new_password: newPassword,
-      };
-
-      const result = await updatePasswordAction(payload);
-
-      if ((result as any)?.success) {
-        setNewPassword("");
-        setOldPassword("");
-        setConfirmPassword("");
-        alert("Password updated successfully");
-      } else {
-        console.error(result);
-      }
-    } catch (error) {
-      // @ts-ignore
-      setErrors({ general: error.message || "Something went wrong"});
-      // @ts-ignore
-      console.error('Update password failed:', error);
-    }
-
-  }
 
   if (!mounted) return null;
 
@@ -246,22 +181,19 @@ export default function MyAccountModal({ onClose }: Props) {
                       label="First Name"
                       name="firstName"
                       value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
+                      onChange={(v) => setFirstName(v)}
                       placeholder="First Name"
-                      className={`flex-1 ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      className="flex-1"
                       error={errors.firstName}
-                      disabled={!isEditing}
-
                     />
                     <Text
                       label="Last Name"
                       name="lastName"
                       value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
+                      onChange={(v) => setLastName(v)}
                       placeholder="Last Name"
-                      className={`flex-1 ${!isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      className="flex-1"
                       error={errors.lastName}
-                      disabled={!isEditing}
                     />
                   </div>
 
@@ -269,13 +201,78 @@ export default function MyAccountModal({ onClose }: Props) {
                     label="Email"
                     name="email"
                     value={email}
-                    className={`flex-1 opacity-60 cursor-not-allowed`}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="example@email.com"
+                    onChange={(v) => setEmail(v)}
+                    placeholder="demo@vola.ad"
                     error={errors.email}
-                    disabled={true}
                   />
 
+                  {/* <Text
+                    label="Company"
+                    name="company"
+                    value={company}
+                    onChange={(v) => setCompany(v)}
+                    placeholder="Collectcent"
+                    error={errors.company}
+                  /> */}
+
+                  {/* <div className="flex flex-col md:flex-row gap-4">
+                    <Select
+                      label="Country"
+                      name="country"
+                      value={country}
+                      onChange={(v) => setCountry(v)}
+                      placeholder="Select Country"
+                      options={[
+                        { label: 'India', value: 'india' },
+                        { label: 'USA', value: 'usa' },
+                      ]}
+                      className="flex-1"
+                      error={errors.country}
+                    />
+                    <Select
+                      label="Time Zone"
+                      name="timezone"
+                      value={timezone}
+                      onChange={(v) => setTimezone(v)}
+                      placeholder="Select Timezone"
+                      options={[
+                        { label: 'IST', value: 'ist' },
+                        { label: 'UTC', value: 'utc' },
+                      ]}
+                      className="flex-1"
+                      error={errors.timezone}
+                    />
+                  </div> */}
+
+                  {/* <Textarea
+                    label="Address"
+                    name="address"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Enter Address"
+                    error={errors.address}
+                  /> */}
+
+                  {/* <div className="flex flex-col md:flex-row gap-4">
+                    <Text
+                      label="City"
+                      name="city"
+                      value={city}
+                      onChange={(v) => setCity(v)}
+                      placeholder="Enter City"
+                      className="flex-1"
+                      error={errors.city}
+                    />
+                    <Text
+                      label="Zipcode"
+                      name="zipcode"
+                      value={zipcode}
+                      onChange={(v) => setZipcode(v)}
+                      placeholder="122002"
+                      className="flex-1"
+                      error={errors.zipcode}
+                    />
+                  </div> */}
                 </div>
               </>
             ) : (
@@ -289,7 +286,7 @@ export default function MyAccountModal({ onClose }: Props) {
                     label="Old Password"
                     name="oldPassword"
                     value={oldPassword}
-                    onChange={(e) => setOldPassword(e.target.value)}
+                    onChange={(v) => setOldPassword(v)}
                     type="password"
                     error={errors.oldPassword}
                   />
@@ -297,7 +294,7 @@ export default function MyAccountModal({ onClose }: Props) {
                     label="New Password"
                     name="newPassword"
                     value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
+                    onChange={(v) => setNewPassword(v)}
                     type="password"
                     error={errors.newPassword}
                   />
@@ -305,7 +302,7 @@ export default function MyAccountModal({ onClose }: Props) {
                     label="Confirm Password"
                     name="confirmPassword"
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={(v) => setConfirmPassword(v)}
                     type="password"
                     error={errors.confirmPassword}
                   />
@@ -314,39 +311,16 @@ export default function MyAccountModal({ onClose }: Props) {
             )}
           </div>
 
-          {errors.general && (
-            <div className="text-red-500 text-sm text-center">
-              {errors.general}
-            </div>
-          )}
-
           {/* Fixed Bottom Button */}
           <div className="pt-6">
-            {activeTab === 'profile' ? (
-              !isEditing ? (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="w-full h-9 px-4 py-2.5 bg-[#FBF7FB] rounded-xl outline outline-1 outline-[#F0E6FF] text-xs text-black"
-                >
-                  Edit Profile
-                </button>
-              ) : (
-                <button
-                  onClick={handleSaveProfile}
-                  disabled={isSaving}
-                  className="w-full h-9 px-4 py-2.5 bg-[#FBF7FB] rounded-xl outline outline-1 outline-[#F0E6FF] text-xs text-black disabled:opacity-60"
-                >
-                  {isSaving ? 'Saving...' : 'Save Profile'}
-                </button>
-              )
-            ) : (
-              <button
-                onClick={handleSavePassword}
-                className="w-full h-9 px-4 py-2.5 bg-[#FBF7FB] rounded-xl outline outline-1 outline-[#F0E6FF] text-xs text-black"
-              >
-                Save Password
-              </button>
-            )}
+            <button
+              onClick={() =>
+                activeTab === 'profile' ? validateProfile() : validatePassword()
+              }
+              className="w-full h-9 px-4 py-2.5 bg-[#FBF7FB] rounded-xl outline outline-1 outline-[#F0E6FF] text-xs text-black"
+            >
+              {activeTab === 'profile' ? 'Save Profile' : 'Save Password'}
+            </button>
           </div>
         </div>
       </div>

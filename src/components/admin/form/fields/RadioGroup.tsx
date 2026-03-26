@@ -53,7 +53,7 @@ export default function RadioGroup({
           >
             <input
               type="radio"
-              name={name} // ✅ proper grouping
+              name={name} 
               value={opt.value}
               checked={value === opt.value}
               onChange={() => onChange(opt.value)}

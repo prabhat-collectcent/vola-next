@@ -6,11 +6,13 @@ import RadioGroup from '@/components/admin/form/fields/RadioGroup';
 import Checkbox from '@/components/admin/form/fields/Checkbox';
 import Text from '@/components/admin/form/fields/Text';
 import { useCampaign } from '../context/CampaignContext';
-import LocationSearchBox from '@/components/admin/form/LocationSearchBox';
-import IpExclusionBox from '@/components/admin/form/IPExclusionBox';
-import CarrierBox from '@/components/admin/form/CarrierBox';
-import Devices from '@/components/admin/form/Devices';
-import Demography from '@/components/admin/form/Demography';
+import LocationSearchBox from '@/components/admin/form/edit_campaign/LocationSearchBox';
+import IpExclusionBox from '@/components/admin/form/edit_campaign/IPExclusionBox';
+import CarrierBox from '@/components/admin/form/edit_campaign/CarrierBox';
+import Devices from '@/components/admin/form/edit_campaign/Devices';
+import Geotargeting from '@/components/campaign/components/edit/Geotargeting';
+import Demography from '@/components/campaign/components/edit/Demography';
+import Miscelleneous from '@/components/campaign/components/edit/Miscellaneous';
 
 interface Props {
   onNext: () => void;
@@ -29,7 +31,7 @@ export default function Targeting({
   const [errors, setErrors] = useState<Record<string, string>>({})
   const { state, dispatch } = useCampaign()
 
-  const [activeTab, setActiveTab] = useState<'geo' | 'device' | 'adtype'>(
+  const [activeTab, setActiveTab] = useState<'geo' | 'demography' | 'miscellaneous'>(
     'geo'
   );
 
@@ -96,13 +98,13 @@ export default function Targeting({
         <div className="flex justify-between gap-10 border-b border-neutral-200 mb-6">
           {[
             { key: 'geo', label: 'Geo Targeting' },
-            { key: 'device', label: 'Device Targeting' },
-            { key: 'adtype', label: 'Demography' },
+            { key: 'demography', label: 'Demography exclusions' },
+            { key: 'miscellaneous', label: 'Miscellaneous' },
           ].map((tab) => (
             <button
               key={tab.key}
               onClick={() =>
-                setActiveTab(tab.key as 'geo' | 'device' | 'adtype')
+                setActiveTab(tab.key as 'geo' | 'demography' | 'miscellaneous')
               }
               className={`pb-3 text-sm ${activeTab === tab.key
                 ? 'text-[#4144E6] border-b-2 border-[#4144E6]'
@@ -116,35 +118,19 @@ export default function Targeting({
 
         {/* GEO TAB */}
         {activeTab === 'geo' && (
-          <div className="flex flex-col">
-            <LocationSearchBox title="Include locations" type="include" />
-            <LocationSearchBox title="Exclude locations" type="exclude" />
-            <IpExclusionBox />
-            <CarrierBox />
-
-
-          </div>
+          <Geotargeting />
         )}
 
         {/* DEVICE TAB */}
-        {activeTab === 'device' && (
-          <Devices />
+        {activeTab === 'demography' && (
+          <Demography />
         )}
 
         {/* AD TYPE TAB */}
-        {activeTab === 'adtype' && (
-         <Demography/>
+        {activeTab === 'miscellaneous' && (
+          <Miscelleneous />
         )}
 
-        {/* Next */}
-        <div className="flex justify-end">
-          <button
-            onClick={onNext}
-            className="px-4 py-2 bg-indigo-800 rounded-full text-white text-sm"
-          >
-            Next
-          </button>
-        </div>
       </div>
     </div>
   );

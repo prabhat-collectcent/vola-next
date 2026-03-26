@@ -1,7 +1,7 @@
 // components/admin/campaign/CampaignPage.tsx
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Table from '@/components/admin/datagrid/Table';
 import PaginationComponent from '@/components/admin/datagrid/Pagination';
 import Select from '@/components/form/fields/Select';
@@ -11,6 +11,8 @@ import SearchIcon from '@mui/icons-material/Search';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import AddIcon from '@mui/icons-material/Add';
 import { useRouter } from 'next/navigation';
+import { getCampaignAction } from '@/actions/campaign.actions';
+import { getCampaignsParams } from '@/services/campaign.service';
 
 interface CampaignItem {
   id: number;
@@ -21,27 +23,34 @@ interface CampaignItem {
   clicks: number;
   ctr: string;
   conversions: number;
+  bidding_strategy: string;
+  campaign_type: 'DISPLAY' | 'PERFORMANCE';
+  avg_cpc: number;
+  bid_value: number;
   cr: string;
   ecpa: string;
-  status: 'Draft' | 'Active' | 'Paused';
+  status: 'PAUSED' | 'ENABLED';
   checked: boolean;
 }
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 10;
 
 export default function CampaignPage() {
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
+  const [pageCount, setPageCount] = useState(0);
+
   const [sortKey, setSortKey] = useState<string>('name');
   const [order, setOrder] = useState<'asc' | 'desc' | ''>('asc');
 
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState<'PAUSED' | 'ENABLED' | ''>('');
   const [os, setOs] = useState('');
   const [country, setCountry] = useState('');
-  const [campaignType, setCampaignType] = useState('');
+  const [campaignType, setCampaignType] = useState<'DISPLAY' | 'PERFORMANCE' | ''>('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
+  // console.log("campaign page rendered", search, currentPage)
   const [showColumns, setShowColumns] = useState(false);
 
   const [visibleColumns, setVisibleColumns] = useState<string[]>([
@@ -51,29 +60,75 @@ export default function CampaignPage() {
     'clicks',
     'ctr',
     'conversions',
-    'cr',
-    'ecpa',
+    // 'cr',
+    // 'ecpa',
+    'type',
+    'bidding_strategy',
+    'bid_value',
+    'avg_cpc',
     'status',
   ]);
 
   const [tempColumns, setTempColumns] = useState<string[]>(visibleColumns);
 
-  const [data, setData] = useState<CampaignItem[]>(
-    Array.from({ length: 12 }).map((_, i) => ({
-      id: i + 1,
-      name: 'Test Campaign',
-      code: `31390${100 + i}`,
-      spend: 0,
-      impressions: 0,
-      clicks: 0,
-      ctr: '-',
-      conversions: 0,
-      cr: '-',
-      ecpa: '-',
-      status: 'Draft',
-      checked: false,
-    }))
-  );
+  const [data, setData] = useState<CampaignItem[]>([]);
+
+  function useDebounce<T>(value: T, delay: number) {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        setDebouncedValue(value);
+      }, delay);
+
+      return () => clearTimeout(timer);
+    }, [value, delay]);
+
+    return debouncedValue;
+  }
+
+  const debouncedSearch = useDebounce(search, 1000);
+
+
+  useEffect(() => {
+    async function fetchCampaigns() {
+      console.log('currentPage', currentPage);
+      let queryParams: getCampaignsParams = { per_page: PAGE_SIZE, page_number: currentPage + 1 };
+      if (status) queryParams.status = status;
+      if (startDate) queryParams.start_date = startDate;
+      if (endDate) queryParams.end_date = endDate;
+      if (campaignType) queryParams.campaign_type = campaignType;
+      if (debouncedSearch) queryParams.search = debouncedSearch;
+
+      const fetchedCampaigns = await getCampaignAction(queryParams);
+      console.log('fetchedCampaigns', fetchedCampaigns)
+      // @ts-ignore
+      setData(fetchedCampaigns.data.map((current) => ({
+        id: current.id,
+        name: current.name,
+        spend: current.metrics?.cost_micros / 1e6 || 0,
+        impressions: current.metrics?.impressions || 0,
+        clicks: current.metrics?.clicks || 0,
+        ctr: current.metrics?.ctr ? `${(current.metrics.ctr * 100).toFixed(2)}%` : '-',
+        conversions: current.metrics?.conversions || 0,
+        cr: current.metrics?.cr ? `${(current.metrics.cr * 100).toFixed(2)}%` : '-',
+        ecpa: current.metrics?.ecpa ? `$${(current.metrics.ecpa / 1e6).toFixed(2)}` : '-',
+        status: current.status,
+        checked: false,
+        bidding_strategy: current.bidding_strategy_type,
+        type: current.campaign_type === 'PERFORMANCE_MAX' ? 'PERFORMACE' : current.campaign_type,
+        avg_cpc: current.metrics?.average_cpc ? current.metrics.average_cpc / 1e6 : 0,
+        bid_value: current.ad_group?.cpm_bid_micros ? current.ad_group?.cpm_bid_micros / 1e6 : 0,
+      })));
+
+      // @ts-ignore
+      setPageCount(Math.ceil(fetchedCampaigns.pagination.total / PAGE_SIZE))
+    }
+    fetchCampaigns();
+  }, [currentPage, startDate, campaignType, debouncedSearch, endDate, status]);
+
+
+
 
   const handleSortChange = (key: string, ord: 'asc' | 'desc' | '') => {
     setSortKey(key);
@@ -90,36 +145,10 @@ export default function CampaignPage() {
     setData((prev) => prev.map((x) => ({ ...x, checked })));
   };
 
-  const filtered = useMemo(() => {
-    let rows = [...data];
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [debouncedSearch, status, campaignType, startDate, endDate]);
 
-    if (search) {
-      rows = rows.filter((x) =>
-        x.name.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-
-    if (status) {
-      rows = rows.filter((x) => x.status === status);
-    }
-
-    if (sortKey) {
-      rows.sort((a: any, b: any) => {
-        if (a[sortKey] < b[sortKey]) return order === 'asc' ? -1 : 1;
-        if (a[sortKey] > b[sortKey]) return order === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
-
-    return rows;
-  }, [data, search, status, sortKey, order]);
-
-  const pageCount = Math.ceil(filtered.length / PAGE_SIZE);
-
-  const paginated = filtered.slice(
-    currentPage * PAGE_SIZE,
-    currentPage * PAGE_SIZE + PAGE_SIZE
-  );
 
   const allColumns = [
     { key: 'name', label: 'Campaign Name', sortable: true, custom: true },
@@ -128,8 +157,10 @@ export default function CampaignPage() {
     { key: 'clicks', label: 'Clicks', sortable: true },
     { key: 'ctr', label: 'CTR' },
     { key: 'conversions', label: 'Conversions' },
-    { key: 'cr', label: 'CR' },
-    { key: 'ecpa', label: 'eCPA' },
+    { key: 'type', label: 'Type' },
+    { key: 'bidding_strategy', label: 'Bidding Strategy' },
+    { key: 'bid_value', label: 'Bid Value' },
+    { key: 'avg_cpc', label: 'Avg CPC' },
     { key: 'status', label: 'Status', custom: true },
     { key: 'actions', label: '', custom: true },
   ];
@@ -189,11 +220,11 @@ export default function CampaignPage() {
               name="status"
               value={status}
               placeholder="No Status"
+              // @ts-ignore
               onChange={setStatus}
               options={[
-                { label: 'Draft', value: 'Draft' },
-                { label: 'Active', value: 'Active' },
-                { label: 'Paused', value: 'Paused' },
+                { label: 'Enabled', value: 'ENABLED' },
+                { label: 'Paused', value: 'PAUSED' },
               ]}
             />
 
@@ -226,10 +257,11 @@ export default function CampaignPage() {
               name="campaignType"
               value={campaignType}
               placeholder="No Type"
+              // @ts-ignore
               onChange={setCampaignType}
               options={[
-                { label: 'CPI', value: 'CPI' },
-                { label: 'CPA', value: 'CPA' },
+                { label: 'Performance', value: 'PERFORMANCE' },
+                { label: 'Branding', value: 'DISPLAY' },
               ]}
             />
           </div>
@@ -276,13 +308,14 @@ export default function CampaignPage() {
             <div className="min-w-[900px]">
               <Table
                 columns={columns}
-                data={paginated}
+                data={data}
                 toggleRow={toggleRow}
                 toggleAll={toggleAll}
                 customRender={customRender}
                 sortKey={sortKey}
                 order={order}
                 onSortChange={handleSortChange}
+                onRowClick={(row) => { router.push(`/admin/campaign/edit/${row.id}`); }}
               />
             </div>
           </div>

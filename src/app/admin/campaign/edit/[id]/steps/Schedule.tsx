@@ -1,10 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import DateField from '@/components/admin/form/fields/Date';
 import Select from '@/components/admin/form/fields/Select';
 import RadioGroup from '@/components/admin/form/fields/RadioGroup';
 import { useCampaign } from '../context/CampaignContext';
+import { updateCampaignScheduleAction } from '@/actions/campaign.actions';
+import { useParams } from 'next/navigation';
+import { useToast } from '@/components/toast/ToastProvider';
+import { updateCampaignSchedulePayload } from '@/services/campaign.service';
 
 const MINUTES = [
   { key: "ZERO", label: "00" },
@@ -30,6 +34,8 @@ interface Props {
   onToggle: () => void;
 }
 
+const formatDate = (iso: string) => iso.split("T")[0];
+
 export default function Schedule({
   onNext,
   isActive,
@@ -39,19 +45,75 @@ export default function Schedule({
 
   const { state, dispatch } = useCampaign()
 
-  const [dayParting, setDayParting] = useState('all');
-  const [weekDay, setWeekDay] = useState('');
-  const [startHours, setStartTime] = useState('');
-  const [endHours, setEndTime] = useState('');
-  const [startMinutes, setStartMinutes] = useState('');
-  const [endMinutes, setEndMinutes] = useState('');
+  const { id } = useParams();
 
-  console.log("day parting value", dayParting, weekDay, startHours, endHours);
+  const { showToast } = useToast();
+
 
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [warnings, setWarnings] = useState<Record<string, string>>({});
 
   console.log("Schedule component rendered", state);
+
+
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [dayParting, setDayParting] = useState('all');
+  const [weekDay, setWeekDay] = useState('');
+  const [startHour, setStartHour] = useState('');
+  const [endHour, setEndHour] = useState('');
+  const [startMinute, setStartMinute] = useState('');
+  const [endMinute, setEndMinute] = useState('');
+
+  const scheduleLength = state.schedules.length;
+
+  useEffect(() => {
+    if (state.start_date) {
+      setStartDate(formatDate(state.start_date));
+    }
+    if (state.end_date) {
+      setEndDate(formatDate(state.end_date));
+    }
+  }, [state.start_date, state.end_date]);
+
+
+  useEffect(() => {
+    async function setStartDateWarning() {
+
+      if (startDate && startDate <= formatDate(new Date().toISOString())) {
+        setWarnings((prev) => ({
+          ...prev,
+          startDate: "Start date cannot be modified after campaign starts"
+        }))
+      }
+    }
+    setStartDateWarning();
+  }, [startDate]);
+
+
+
+  useEffect(() => {
+    if (scheduleLength > 0) {
+      const { start_hour, start_minute, end_hour, end_minute } =
+        state.schedules[0].criterion_data;
+
+      setDayParting("specific");
+
+      let daysValue = null;
+      if (scheduleLength === 2) daysValue = "weekend";
+      else if (scheduleLength === 5) daysValue = "weekdays";
+      else if (scheduleLength === 7) daysValue = "all";
+
+      if (daysValue) setWeekDay(daysValue);
+
+      setStartHour(start_hour.toString());
+      setStartMinute(start_minute);
+      setEndHour(end_hour.toString());
+      setEndMinute(end_minute);
+    }
+  }, [scheduleLength]);
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.name;
@@ -82,28 +144,14 @@ export default function Schedule({
         setErrors((prev) => ({ ...prev, end_date: "" }));
 
       }
-
-      dispatch({
-        type: "SET_FIELD",
-        payload: {
-          [name]: value
-        }
-      })
-
+      setStartDate(value);
       return;
     }
 
 
     if (name === "end_date") {
 
-      dispatch({
-        type: "SET_FIELD",
-        payload: {
-          [name]: value
-        }
-      })
-
-
+      setEndDate(value);
       if (value < today) {
         setErrors((prev) => ({
           ...prev,
@@ -143,7 +191,7 @@ export default function Schedule({
   }
 
   const handleStartHourChange = (val: string) => {
-    setStartTime(val);
+    setStartHour(val);
     setErrors((prev) => ({
       ...prev,
       startHours: ""
@@ -151,7 +199,7 @@ export default function Schedule({
   }
 
   const handleStartMinutesChange = (val: string) => {
-    setStartMinutes(val);
+    setStartMinute(val);
     setErrors((prev) => ({
       ...prev,
       startMinutes: ""
@@ -159,7 +207,7 @@ export default function Schedule({
   }
 
   const handleEndHoursChange = (val: string) => {
-    setEndTime(val);
+    setEndHour(val);
     setErrors((prev) => ({
       ...prev,
       endHours: ""
@@ -167,7 +215,7 @@ export default function Schedule({
   }
 
   const handleEndMinutesChange = (val: string) => {
-    setEndMinutes(val);
+    setEndMinute(val);
     setErrors((prev) => ({
       ...prev,
       endMinutes: ""
@@ -182,43 +230,45 @@ export default function Schedule({
         isValidationPassed = false;
       }
 
-      if (!startHours) {
+      if (!startHour) {
         setErrors((prev) => ({ ...prev, startHours: "required for day parting" }));
         isValidationPassed = false;
       }
 
-      if (!endHours) {
+      if (!endHour) {
         setErrors((prev) => ({ ...prev, endHours: "required for day parting" }));
         isValidationPassed = false;
       }
 
-      if (!startMinutes) {
+      if (!startMinute) {
         setErrors((prev) => ({ ...prev, startMinutes: "required for day parting" }));
         isValidationPassed = false;
 
       }
 
-      if (!endMinutes) {
+      if (!endMinute) {
         setErrors((prev) => ({ ...prev, endMinutes: "required for day parting" }));
         isValidationPassed = false;
 
       }
 
-      if (startHours && endHours) {
+      if (startHour && endHour) {
 
-        if (endHours < startHours || (endHours === startHours && endMinutes <= startMinutes)) {
+        const sH = Number(startHour);
+        const eH = Number(endHour);
+
+        if (eH < sH || (eH === sH && endMinute <= startMinute)) {
           setErrors((prev) => ({ ...prev, endHours: "End time must be after start time" }));
           isValidationPassed = false;
         }
       }
-      return isValidationPassed;
     }
     return isValidationPassed;
+
   }
 
-  function handleNextStep() {
-    console.log("next step function called", weekDay, startHours, endHours, startMinutes, endMinutes)
-    console.log("validate()", validate())
+  async function handleNextStep() {
+    console.log("next step function calleds", weekDay, startHour, endHour, startMinute, endMinute)
     if (!validate()) return;
     if (dayParting === 'specific') {
       let data: any = [];
@@ -226,20 +276,20 @@ export default function Schedule({
         data = DAYS.map((day) => {
           return {
             day_of_week: day,
-            start_hour: Number(startHours),
-            end_hour: Number(endHours),
-            start_minute: startMinutes,
-            end_minute: endMinutes,
+            start_hour: Number(startHour),
+            end_hour: Number(endHour),
+            start_minute: startMinute,
+            end_minute: endMinute,
           }
         })
       } else if (weekDay === "weekdays") {
         data = DAYS.filter(day => day !== "SUNDAY" && day !== "SATURDAY").map((day) => {
           return {
             day_of_week: day,
-            start_hour: Number(startHours),
-            end_hour: Number(endHours),
-            start_minute: startMinutes,
-            end_minute: endMinutes,
+            start_hour: Number(startHour),
+            end_hour: Number(endHour),
+            start_minute: startMinute,
+            end_minute: endMinute,
           }
         })
       }
@@ -247,23 +297,52 @@ export default function Schedule({
         data = DAYS.filter(day => day === "SUNDAY" || day === "SATURDAY").map((day) => {
           return {
             day_of_week: day,
-            start_hour: Number(startHours),
-            end_hour: Number(endHours),
-            start_minute: startMinutes,
-            end_minute: endMinutes,
+            start_hour: Number(startHour),
+            end_hour: Number(endHour),
+            start_minute: startMinute,
+            end_minute: endMinute,
           }
         })
       }
 
-      dispatch({
-        type: "SET_FIELD",
-        payload: {
-          schedules: data
+      const payload: updateCampaignSchedulePayload = {
+        addedSchedules: data,
+        removedSchedules: state.schedules.map(s => s.id)
+      };
+
+      if (formatDate(state.start_date) != startDate) payload.start_date = startDate;
+      if (formatDate(state.end_date) != startDate) payload.end_date = endDate;
+      try {
+
+        // console.log("update campaign schedule payload", payload);
+        const apiResponse: any = await updateCampaignScheduleAction(id as unknown as number, payload);
+
+        console.log("update schedule api res", apiResponse)
+
+        if ((apiResponse as any)?.success) {
+          showToast('Campaign schedule updated successfully', 'success');
+        } else {
+          showToast(apiResponse?.message || 'Something went wrong', 'error');
+          return;
         }
-      });
+
+      } catch (error) {
+        showToast((error as Error)?.message || 'Something went wrong', 'error');
+        return;
+
+      }
+
+      onNext();
+
+
+      // dispatch({
+      //   type: "SET_FIELD",
+      //   payload: {
+      //     schedules: data
+      //   }
+      // });
 
     }
-    onNext();
   }
 
 
@@ -309,15 +388,16 @@ export default function Schedule({
             <DateField
               label="Start Date"
               name="start_date"
-              value={state.start_date}
+              value={formatDate(startDate)}
               onChange={handleChange}
               error={errors.start_date}
+              warning={warnings.startDate}
             />
 
             <DateField
               label="End Date"
               name="end_date"
-              value={state.end_date}
+              value={formatDate(endDate)}
               onChange={handleChange}
               error={errors.end_date}
 
@@ -356,7 +436,7 @@ export default function Schedule({
               <Select
                 label="Start Hour"
                 name="startHour"
-                value={startHours}
+                value={`${String(startHour).padStart(2, "0")}`}
                 error={errors.startHours}
                 onChange={handleStartHourChange}
                 placeholder="Start Hour"
@@ -373,7 +453,7 @@ export default function Schedule({
               <Select
                 label="Start Minutes"
                 name="startMinutes"
-                value={startMinutes}
+                value={startMinute}
                 onChange={handleStartMinutesChange}
                 error={errors.startMinutes}
                 placeholder="Start Minutes"
@@ -388,7 +468,7 @@ export default function Schedule({
               <Select
                 label="End Hours"
                 name="endHours"
-                value={endHours}
+                value={`${String(endHour).padStart(2, "0")}`}
                 onChange={handleEndHoursChange}
                 placeholder="End Hours"
                 error={errors.endHours}
@@ -407,7 +487,7 @@ export default function Schedule({
               <Select
                 label="End Minutes"
                 name="endMinutes"
-                value={endMinutes}
+                value={endMinute}
                 onChange={handleEndMinutesChange}
                 placeholder="End Minutes"
                 error={errors.endMinutes}
@@ -427,7 +507,7 @@ export default function Schedule({
               onClick={handleNextStep}
               className="px-4 py-2 bg-indigo-800 rounded-full text-white text-sm"
             >
-              Next
+              Save
             </button>
           </div>
         </div>

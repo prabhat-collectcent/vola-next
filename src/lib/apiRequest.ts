@@ -14,6 +14,11 @@ export async function apiRequest<T>(
       console.error("server response:", error.response.data);
     }
 
-    throw error;
+    let message = error?.response?.data?.message || error.message || "request failed";
+    if (error?.response?.data?.errors?.length == 1 && error?.response?.data?.errors[0].message) {
+      message = error?.response?.data?.errors[0].message;
+    }
+
+    throw new Error(message);
   }
 }

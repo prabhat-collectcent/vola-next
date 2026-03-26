@@ -30,7 +30,9 @@ export interface CampaignState {
     budget: number
     bid_value: number
     start_date: string
-    end_date: string
+    end_date: string,
+    status: 'ENABLED' | 'PAUSED',
+    campaign_type: 'DISPLAY' | 'PERFORMANCE_MAX'
 
     geo_include: any[]
     geo_exclude: any[]

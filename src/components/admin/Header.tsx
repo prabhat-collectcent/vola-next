@@ -8,6 +8,7 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MyAccountModal from '@/components/admin/modals/MyAccountModal';
 import { signOut } from 'next-auth/react';
+import { getProfileAction } from '@/actions/profile.actions';
 
 export default function Header({
   onToggleSidebar,
@@ -22,12 +23,27 @@ export default function Header({
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
 
-  const userProfile = {
-    name: 'Prabhat',
-    email: 'prabhat@collectcent.com',
-    id: '1',
-    avatar: '/profile-avatar.svg',
-  };
+ const defaultAvtar = '/person.png'
+
+const [user, setUser] = useState<any>(null);
+
+ useEffect(() => {
+    async function fetchUserProfile() {
+      const result = await getProfileAction();
+      const userData = (result as any).data.user;
+
+      setUser(userData);
+
+      // // populate fields
+      // setFirstName(userData.firstname || '');
+      // setLastName(userData.lastname || '');
+      // setEmail(userData.email || '');
+    }
+    fetchUserProfile();
+  }, []);
+
+  
+
 
   function handleLogout() {
         signOut({
@@ -151,7 +167,7 @@ export default function Header({
           >
             <div className="w-9 h-9 rounded-full overflow-hidden">
               <Image
-                src={userProfile.avatar}
+                src={defaultAvtar}
                 alt="User"
                 width={36}
                 height={36}
@@ -167,7 +183,7 @@ export default function Header({
                 <div className="flex gap-2.5">
                   <div className="w-9 h-9 rounded-full overflow-hidden">
                     <Image
-                      src={userProfile.avatar}
+                      src={defaultAvtar}
                       alt="User"
                       width={36}
                       height={36}
@@ -177,13 +193,13 @@ export default function Header({
 
                   <div className="flex flex-col gap-0.5">
                     <div className="text-xs text-black">
-                      {userProfile.name || '—'}
+                      {user?.firstname || '—'}
                     </div>
                     <div className="text-xs text-neutral-700">
-                      {userProfile.email || '—'}
+                      {user?.email || '—'}
                     </div>
                     <div className="text-[9px] text-neutral-700">
-                      {userProfile.id ? `ID: ${userProfile.id}` : '—'}
+                      {user?.id ? `ID: ${user.id}` : '—'}
                     </div>
                   </div>
                 </div>

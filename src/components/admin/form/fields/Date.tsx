@@ -6,10 +6,12 @@ interface Props {
   label: string;
   name: string;
   value: string;
-  onChange: (val: string) => void;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  error?: string;
+  warning?: string
 }
 
-export default function DateField({ label, name, value, onChange }: Props) {
+export default function DateField({ label, name, value, onChange, error, warning }: Props) {
   return (
     <div className="flex flex-col gap-2 w-full">
       <label className="text-xs text-stone-900">{label}</label>
@@ -19,10 +21,19 @@ export default function DateField({ label, name, value, onChange }: Props) {
           type="date"
           name={name}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => onChange(e)}
           className="w-full text-xs outline-none bg-transparent"
         />
+
       </div>
+              {error && <div className="text-[11px] text-red-400 mt-1">{error}</div>}
+              {warning && <div className="text-[11px] text-amber-400 mt-1">{warning}</div>}
+
+
     </div>
+
+
+
+    
   );
 }

@@ -5,7 +5,10 @@ import Image from 'next/image';
 import Text from '@/components/admin/form/fields/Text';
 import Select from '@/components/admin/form/fields/Select';
 import { useCampaign } from '../context/CampaignContext';
-import { CampaignBasicSchema } from '@/lib/validations/camapaign.validation';
+import { CampaignBasicSchema } from '@/lib/validations/edit-campaign.validation';
+import { updateCampaignBasicAction } from '@/actions/campaign.actions';
+import { useParams } from 'next/navigation';
+import { useToast } from '@/components/toast/ToastProvider';
 
 interface Props {
   onNext: () => void;
@@ -21,15 +24,20 @@ export default function CampaignBasics({
   isDisabled,
   onToggle,
 }: Props) {
-  const [objective, setObjective] = useState<"DISPLAY" | "PERFORMANCE_MAX">(
-    'DISPLAY'
+
+
+  const { showToast } = useToast();
+
+  const { id } = useParams();
+  const [objective, setObjective] = useState<'branding' | 'performance'>(
+    'branding'
   );
 
   const [campaignName, setCampaignName] = useState('');
   const [campaignUrl, setCampaignUrl] = useState('');
   const [packageUrl, setPackageUrl] = useState('');
   const [platform, setPlatform] = useState('');
-  const [adType, setAdType] = useState<'display' | 'video' | 'ctv' | ''>('');
+  const [adType, setAdType] = useState<'display' | 'video' | 'ctv'>('');
   const [attribution, setAttribution] = useState<string>('');
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -41,29 +49,14 @@ export default function CampaignBasics({
     dispatch({
       type: "SET_FIELD",
       payload: {
-        name: e.target.value
+        [e.target.name]: (e.target.type === 'number' && e.target.value) ? parseFloat(e.target.value) : e.target.value
       }
     })
   }
 
-  const handleObjectiveChange = (objective: "PERFORMACE_MAX" | "DISPLAY") => {
-    // @ts-ignore
-    setObjective(objective)
+  async function handleSave() {
 
-
-    dispatch({
-      type: "SET_FIELD",
-      payload: {
-        // @ts-ignore
-        campaign_type: objective
-      }
-    })
-  }
-
-  function handleNextStep() {
-
-
-    const result = CampaignBasicSchema.safeParse({ name: state.name });
+    const result = CampaignBasicSchema.safeParse({ name: state.name, budget: state.budget, bid_value: state.bid_value });
     console.log("validation result", result)
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
@@ -77,6 +70,29 @@ export default function CampaignBasics({
       return;
 
     }
+
+    try {
+      const apiResponse: any = await updateCampaignBasicAction(id as unknown as number, {
+        name: state.name,
+        budget: state.budget,
+        cpm_bid_value: state.bid_value,
+      })
+
+      console.log("update api res", apiResponse)
+
+      if ((apiResponse as any)?.success) {
+        showToast('Camapaign basic details updated successfully', 'success');
+      } else {
+        showToast(apiResponse?.message || 'Something went wrong', 'error');
+        return;
+      }
+
+    } catch (error) {
+      showToast((error as Error)?.message || 'Something went wrong', 'error');
+      return;
+
+    }
+
     onNext();
   }
 
@@ -127,13 +143,13 @@ export default function CampaignBasics({
             <div className="flex gap-3">
               {[
                 {
-                  key: 'DISPLAY',
+                  key: 'branding',
                   label: 'Branding',
                   desc: 'Maximize reach and build brand awareness at scale.',
                   icon: '/branding-icon.svg',
                 },
                 {
-                  key: 'PERFORMANCE_MAX',
+                  key: 'performance',
                   label: 'App Performance',
                   desc: 'Optimize delivery to drive actions and measurable results.',
                   icon: '/performance-icon.svg',
@@ -142,8 +158,7 @@ export default function CampaignBasics({
                 <div
                   key={item.key}
                   onClick={() =>
-                    // @ts-ignore
-                    handleObjectiveChange(item.key)
+                    setObjective(item.key as 'branding' | 'performance')
                   }
                   className={`flex-1 h-32 px-3 py-2.5 rounded-xl cursor-pointer flex flex-col gap-2 ${objective === item.key
                     ? 'outline outline-1 outline-[#4144E6]'
@@ -172,11 +187,11 @@ export default function CampaignBasics({
 
           {/* Fields */}
           <div className="flex flex-col">
-            {objective === 'DISPLAY' ? (
+            {objective === 'branding' ? (
               <>
                 <Text
                   label="Campaign Name*"
-                  name="campaignName"
+                  name="name"
                   value={state.name}
                   onChange={handleChange}
                   placeholder="Enter Campaign Name"
@@ -186,14 +201,55 @@ export default function CampaignBasics({
                 />
 
                 <Text
+                  type='number'
+                  label="Daily Budget"
+                  name="budget"
+                  value={state.budget}
+                  onChange={handleChange}
+                  placeholder="Daily Budget"
+                  className="mb-[24px]"
+                  error={errors.budget}
+                  step="any"
+                />
+
+                <div className="flex gap-3">
+                  <Select
+                    label="Bid"
+                    name="bid_value"
+                    value="cpm"
+                    // onChange={handleChange}
+                    placeholder="CPM"
+                    className="mb-[24px]"
+                    options={[
+                      { label: 'CPM', value: 'cpm' }
+                    ]}
+                  />
+
+                  <Text
+                    type='number'
+                    label="Amount"
+                    name="bid_value"
+                    value={state.bid_value}
+                    onChange={handleChange}
+                    className="mb-[24px]"
+                    placeholder="Amount"
+                    error={errors.bid_value}
+                    step="any"
+
+
+                  />
+                </div>
+
+
+
+                {/* <Text
                   label="Campaign URL*"
                   name="campaignUrl"
                   value={campaignUrl}
-                  // @ts-ignore
                   onChange={(val: string) => setCampaignUrl(val)}
                   placeholder="Enter Campaign URL"
                   className="mb-[24px]"
-                />
+                /> */}
 
                 {/* Ad Type */}
                 <div className="flex gap-4">
@@ -233,12 +289,10 @@ export default function CampaignBasics({
                 <Text
                   label="Campaign Name*"
                   name="campaignName"
-                  value={state.name}
-                  onChange={handleChange}
+                  value={campaignName}
+                  onChange={(val: string) => setCampaignName(val)}
                   placeholder="Enter Campaign Name"
                   className="mb-[24px]"
-                  error={errors.name}
-
                 />
 
                 <Select
@@ -263,16 +317,6 @@ export default function CampaignBasics({
                   placeholder="Enter package name/app store URL"
                   className="mb-[24px]"
                 />
-
-                <Text
-                  label="App Id"
-                  name="packageUrl"
-                  value={packageUrl}
-                  onChange={(val: string) => setPackageUrl(val)}
-                  placeholder="Enter package name/app store URL"
-                  className="mb-[24px]"
-                />
-
 
                 {/* Attribution */}
                 <div className="flex flex-col">
@@ -315,10 +359,10 @@ export default function CampaignBasics({
           {/* Next */}
           <div className="flex justify-end">
             <button
-              onClick={handleNextStep}
+              onClick={handleSave}
               className="px-4 py-2 bg-indigo-800 rounded-full text-white text-sm"
             >
-              Next
+              Save
             </button>
           </div>
         </div>
