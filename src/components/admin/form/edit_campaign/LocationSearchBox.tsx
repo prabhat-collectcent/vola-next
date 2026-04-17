@@ -8,9 +8,11 @@ import { searchLocationAction } from "@/actions/metadata.actions";
 type Props = {
     title: string;
     type: "include" | "exclude";
+    countryCode: string;
 };
 
-export default function LocationSearchBox({ title, type }: Props) {
+
+export default function LocationSearchBox({ title, type, countryCode }: Props) {
     const [query, setQuery] = useState("");
 
     const { state, dispatch } = useCampaign();
@@ -31,7 +33,7 @@ export default function LocationSearchBox({ title, type }: Props) {
         console.log("query value", query)
 
         // filtered = query.length < 2 ? [] : mockLocations.filter((loc) => loc.toLowerCase().includes(query.toLowerCase()));
-        const locationSearchResult = query.length < 2 ? {} : await searchLocationAction({ query: value });
+        const locationSearchResult = query.length < 2 ? {} : await searchLocationAction({ query: value, country_code: countryCode });
         // @ts-ignore
         setFoundLocations(locationSearchResult.geoTargetConstantSuggestions || []);
 

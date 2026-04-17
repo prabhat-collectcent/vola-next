@@ -16,17 +16,24 @@ export default function CarrierBox() {
 
     useEffect(() => {
         async function fetchCarriers() {
-            const fetchedCarriers = await getMobileCarrersAction();
+            const fetchedCarriers: any = await getMobileCarrersAction();
             // @ts-ignore
-            setCarriers(fetchedCarriers.results.map((carrier) => ({
-                id: carrier.carrierConstant.id,
-                name: carrier.carrierConstant.name,
-                countryCode: carrier.carrierConstant.countryCode,
-                resourceName: carrier.carrierConstant.resourceName,
-            })));
+            const mappedCarriers = fetchedCarriers.data.map((carrier) => ({
+                id: carrier.google_id,
+                name: carrier.name,
+                countryCode: carrier.country_code,
+                resourceName: carrier.google_resource_name,
+            }));
+            if (state.countries && state.countries.length > 0) {
+                setCarriers(mappedCarriers.filter((carrier: any) => {
+                    return state.countries && state.countries.find((c: any) => c.countryCode === carrier.countryCode)
+                }));
+            } else {
+                setCarriers(mappedCarriers);
+            }
         }
         fetchCarriers();
-    }, []);
+    }, [state.countries]);
 
     function toggleCarrier(carrier: Carrier) {
         const foundCarrier = tempSelected.find((c) => c.id === carrier.id);

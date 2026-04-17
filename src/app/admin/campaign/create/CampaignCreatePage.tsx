@@ -13,42 +13,6 @@ import { useRouter } from 'next/navigation';
 
 export default function CampaignCreatePage() {
 
-  const router = useRouter();
-  const { state, dispatch } = useCampaign();
-  const { showToast } = useToast();
-
-
-  async function submitCampaign() {
-    console.log("final state before submission", state)
-    state.geo_include = state.geo_include.map((loc) => loc.geoTargetConstant);
-    state.geo_exclude = state.geo_exclude.map((loc) => loc.geoTargetConstant);
-    // @ts-ignore
-    state.mobile_carriers = state.mobile_carriers.map((carrier) => carrier.resourceName);
-
-
-    try {
-
-      const apiResponse: any = await createCampaignAction(state);
-      console.log("response object")
-      console.log(apiResponse);
-
-
-      if (apiResponse?.success) {
-        const adGroup = "customers/5324834713/adGroups/196059188120" //apiResponse.mutateOperationResponses.find((mutateRes: any) => mutateRes['adGroupResult']);
-        const encodedURI = encodeURIComponent(adGroup) //.adGroupResult.resourceName
-        showToast('Campaign created successfully', 'success');
-        router.push(`/admin/campaign/create/creatives?adGroup=${encodedURI}`)
-      } else {
-        // @ts-ignore
-        showToast(apiResponse?.message || 'Something went wrong', 'error');
-      }
-
-    } catch (error) {
-      showToast((error as Error)?.message || 'Something went wrong', 'error');
-    }
-
-  }
-
   const [activeStep, setActiveStep] = useState(1);
 
   const [campaignUrl, setCampaignUrl] = useState('');
@@ -101,12 +65,6 @@ export default function CampaignCreatePage() {
           onToggle={() => setActiveStep(4)}
         />
 
-        <button
-          onClick={submitCampaign}
-          className="self-end mt-6 px-6 py-2 bg-[#4144E6] text-white rounded-lg"
-        >
-          Create Campaign
-        </button>
       </div>
     </div>
   );

@@ -9,8 +9,10 @@ import { CampaignBasicSchema } from '@/lib/validations/edit-campaign.validation'
 import { updateCampaignBasicAction } from '@/actions/campaign.actions';
 import { useParams } from 'next/navigation';
 import { useToast } from '@/components/toast/ToastProvider';
+import { eventOptions } from '../../../create/steps/CampaignBasics';
 
 interface Props {
+  loading?: boolean;
   onNext: () => void;
   isActive: boolean;
   isDisabled?: boolean;
@@ -19,6 +21,7 @@ interface Props {
 }
 
 export default function CampaignBasics({
+  loading,
   onNext,
   isActive,
   isDisabled,
@@ -26,11 +29,13 @@ export default function CampaignBasics({
 }: Props) {
 
 
+  const [saving, setSaving] = useState(false);
+
   const { showToast } = useToast();
 
   const { id } = useParams();
-  const [objective, setObjective] = useState<'branding' | 'performance'>(
-    'branding'
+  const [objective, setObjective] = useState<'DISPLAY' | 'PERFORMANCE'>(
+    'DISPLAY'
   );
 
   const [campaignName, setCampaignName] = useState('');
@@ -44,14 +49,32 @@ export default function CampaignBasics({
 
   const { state, dispatch } = useCampaign()
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  type ChangeEventType =
+    | React.ChangeEvent<HTMLInputElement>
+    | { name: string; value: any };
+
+
+  const handleChange = (e: ChangeEventType) => {
+
+    let name: string;
+    let value: any;
+
+    if ("target" in e) {
+      // Native input
+      name = e.target.name;
+      value = (e.target.type === 'number' && e.target.value) ? parseFloat(e.target.value) : e.target.value;
+    } else {
+      // Custom component (Select etc.)
+      name = e.name;
+      value = e.value;
+    }
 
     dispatch({
       type: "SET_FIELD",
       payload: {
-        [e.target.name]: (e.target.type === 'number' && e.target.value) ? parseFloat(e.target.value) : e.target.value
-      }
-    })
+        [name]: value,
+      },
+    });
   }
 
   async function handleSave() {
@@ -70,6 +93,9 @@ export default function CampaignBasics({
       return;
 
     }
+
+    setSaving(true);
+
 
     try {
       const apiResponse: any = await updateCampaignBasicAction(id as unknown as number, {
@@ -91,13 +117,59 @@ export default function CampaignBasics({
       showToast((error as Error)?.message || 'Something went wrong', 'error');
       return;
 
+    } finally {
+      setSaving(false);
     }
 
     onNext();
   }
 
 
+  if (loading) {
+    return (
+      <div className="w-full px-12 py-5 bg-white rounded-2xl outline outline-1 outline-neutral-100">
 
+        {/* Header Skeleton */}
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 rounded-full bg-gray-200 animate-pulse" />
+          <div className="h-5 w-40 bg-gray-200 rounded animate-pulse" />
+        </div>
+
+        {/* Body Skeleton */}
+        <div className="mt-6 flex flex-col gap-6 animate-pulse">
+
+          {/* Objective cards */}
+          <div className="flex gap-3">
+            <div className="flex-1 h-32 bg-gray-200 rounded-xl" />
+            <div className="flex-1 h-32 bg-gray-200 rounded-xl" />
+          </div>
+
+          {/* Input fields */}
+          <div className="space-y-4">
+            <div className="h-10 bg-gray-200 rounded" />
+            <div className="h-10 bg-gray-200 rounded" />
+
+            <div className="flex gap-3">
+              <div className="w-1/3 h-10 bg-gray-200 rounded" />
+              <div className="flex-1 h-10 bg-gray-200 rounded" />
+            </div>
+          </div>
+
+          {/* Ad type cards */}
+          <div className="flex gap-4">
+            <div className="flex-1 h-24 bg-gray-200 rounded-xl" />
+            <div className="flex-1 h-24 bg-gray-200 rounded-xl" />
+            <div className="flex-1 h-24 bg-gray-200 rounded-xl" />
+          </div>
+
+          {/* Button */}
+          <div className="flex justify-end">
+            <div className="h-9 w-24 bg-gray-200 rounded-full" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isDisabled) {
     return (
@@ -143,13 +215,13 @@ export default function CampaignBasics({
             <div className="flex gap-3">
               {[
                 {
-                  key: 'branding',
+                  key: 'DISPLAY',
                   label: 'Branding',
                   desc: 'Maximize reach and build brand awareness at scale.',
                   icon: '/branding-icon.svg',
                 },
                 {
-                  key: 'performance',
+                  key: 'PERFORMANCE',
                   label: 'App Performance',
                   desc: 'Optimize delivery to drive actions and measurable results.',
                   icon: '/performance-icon.svg',
@@ -157,10 +229,11 @@ export default function CampaignBasics({
               ].map((item) => (
                 <div
                   key={item.key}
-                  onClick={() =>
-                    setObjective(item.key as 'branding' | 'performance')
-                  }
-                  className={`flex-1 h-32 px-3 py-2.5 rounded-xl cursor-pointer flex flex-col gap-2 ${objective === item.key
+                  //in case of editing campaign, objective cannot be changed, so not setting onClick handler and just showing selected objective
+                  // onClick={() =>
+                  //   handleChangeObjective(item.key as 'DISPLAY' | 'PERFORMANCE')
+                  // }
+                  className={`flex-1 h-32 px-3 py-2.5 rounded-xl cursor-pointer flex flex-col gap-2 ${state.campaign_type === item.key
                     ? 'outline outline-1 outline-[#4144E6]'
                     : 'outline outline-1 outline-neutral-700/20'
                     }`}
@@ -187,7 +260,8 @@ export default function CampaignBasics({
 
           {/* Fields */}
           <div className="flex flex-col">
-            {objective === 'branding' ? (
+            {/* treating display campaigns as branding */}
+            {state.campaign_type === 'DISPLAY' ? (
               <>
                 <Text
                   label="Campaign Name*"
@@ -288,9 +362,9 @@ export default function CampaignBasics({
               <>
                 <Text
                   label="Campaign Name*"
-                  name="campaignName"
-                  value={campaignName}
-                  onChange={(val: string) => setCampaignName(val)}
+                  name="name"
+                  value={state.name}
+                  onChange={handleChange}
                   placeholder="Enter Campaign Name"
                   className="mb-[24px]"
                 />
@@ -298,8 +372,9 @@ export default function CampaignBasics({
                 <Select
                   label="Platform*"
                   name="platform"
-                  value={platform}
-                  onChange={(val: string) => setPlatform(val)}
+                  value={state.platform}
+                  onChange={(value) =>
+                    handleChange({ name: "platform", value })}
                   placeholder="Select Platform"
                   className="mb-[24px]"
                   options={[
@@ -311,12 +386,64 @@ export default function CampaignBasics({
 
                 <Text
                   label="App Package Name / App Store URL*"
-                  name="packageUrl"
-                  value={packageUrl}
-                  onChange={(val: string) => setPackageUrl(val)}
+                  name="package_name"
+                  value={state.package_name}
+                  onChange={handleChange}
                   placeholder="Enter package name/app store URL"
                   className="mb-[24px]"
                 />
+
+                <Select
+                  label="Event*"
+                  name="event"
+                  value={state.event}
+                  onChange={(value) =>
+                    handleChange({ name: "event", value })
+                  } placeholder="Select Event"
+                  className="mb-[24px]"
+                  options={eventOptions}
+                />
+
+
+                <Text
+                  type='number'
+                  label="Daily Budget"
+                  name="budget"
+                  value={state.budget}
+                  onChange={handleChange}
+                  placeholder="Daily Budget"
+                  className="mb-[24px]"
+                  error={errors.budget}
+                  step="any"
+                />
+
+                <div className="flex gap-3">
+                  <Select
+                    label="Bid"
+                    name="bid_value"
+                    value="cpm"
+                    // onChange={handleChange}
+                    placeholder="CPM"
+                    className="mb-[24px]"
+                    options={[
+                      { label: 'CPM', value: 'cpm' }
+                    ]}
+                  />
+
+                  <Text
+                    type='number'
+                    label="Amount"
+                    name="bid_value"
+                    value={state.bid_value}
+                    onChange={handleChange}
+                    className="mb-[24px]"
+                    placeholder="Amount"
+                    error={errors.bid_value}
+                    step="any"
+
+
+                  />
+                </div>
 
                 {/* Attribution */}
                 <div className="flex flex-col">
@@ -332,7 +459,7 @@ export default function CampaignBasics({
                       <div
                         key={item.key}
                         onClick={() => setAttribution(item.key)}
-                        className={`w-28 rounded-xl flex items-center justify-center cursor-pointer ${attribution === item.key
+                        className={`w-28 rounded-xl flex items-center justify-center cursor-pointer ${item.key === 'appsflyer'
                           ? 'outline outline-1 outline-[#4144E6]'
                           : 'outline outline-1 outline-zinc-100'
                           }`}
@@ -352,6 +479,9 @@ export default function CampaignBasics({
                     support@vola.ad
                   </div>
                 </div>
+
+
+
               </>
             )}
           </div>
@@ -360,9 +490,19 @@ export default function CampaignBasics({
           <div className="flex justify-end">
             <button
               onClick={handleSave}
-              className="px-4 py-2 bg-indigo-800 rounded-full text-white text-sm"
+              disabled={saving}
+              className={`px-4 py-2 rounded-full text-white text-sm flex items-center justify-center gap-2
+    ${saving ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-800'}
+  `}
             >
-              Save
+              {saving ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  Saving...
+                </>
+              ) : (
+                'Save'
+              )}
             </button>
           </div>
         </div>

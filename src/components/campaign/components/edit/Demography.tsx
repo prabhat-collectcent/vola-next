@@ -6,8 +6,11 @@ import Checkbox from "@/components/admin/form/fields/Checkbox";
 import { useToast } from "@/components/toast/ToastProvider";
 import { updateCampaignDemographyPayload, updateCampaignDemographyTargeting } from "@/services/campaign.service";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 
 export default function Demography() {
+
+    const [saving, setSaving] = useState(false);
 
     const { state, dispatch } = useCampaign();
     const { showToast } = useToast();
@@ -79,6 +82,8 @@ export default function Demography() {
     async function handleDemographySave() {
         console.log("handle demography called", state);
 
+        setSaving(true);
+
         try {
 
             let payload: updateCampaignDemographyPayload = {
@@ -102,12 +107,12 @@ export default function Demography() {
                 showToast('Campaign demography targeting updated successfully', 'success');
             } else {
                 showToast(apiResponse?.message || 'Something went wrong', 'error');
-                return;
             }
 
         } catch (error) {
             showToast((error as Error)?.message || 'Something went wrong', 'error');
-            return;
+        } finally {
+            setSaving(false);
         }
 
 
@@ -284,12 +289,24 @@ export default function Demography() {
             </div>
 
             <div className="flex justify-end">
-                <button
-                    onClick={handleDemographySave}
-                    className="px-4 py-2 bg-indigo-800 rounded-full text-white text-sm"
-                >
-                    Save
-                </button>
+
+                 <button
+              onClick={handleDemographySave}
+              disabled={saving}
+              className={`px-4 py-2 rounded-full text-white text-sm flex items-center justify-center gap-2
+    ${saving ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-800'}
+  `}
+            >
+              {saving ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  Saving...
+                </>
+              ) : (
+                'Save'
+              )}
+            </button>
+
             </div>
         </div>
 

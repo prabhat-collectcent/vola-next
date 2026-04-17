@@ -36,6 +36,9 @@ interface CampaignItem {
 const PAGE_SIZE = 10;
 
 export default function CampaignPage() {
+
+  const [loading, setLoading] = useState(true);
+
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [pageCount, setPageCount] = useState(0);
@@ -92,37 +95,45 @@ export default function CampaignPage() {
 
   useEffect(() => {
     async function fetchCampaigns() {
-      console.log('currentPage', currentPage);
-      let queryParams: getCampaignsParams = { per_page: PAGE_SIZE, page_number: currentPage + 1 };
-      if (status) queryParams.status = status;
-      if (startDate) queryParams.start_date = startDate;
-      if (endDate) queryParams.end_date = endDate;
-      if (campaignType) queryParams.campaign_type = campaignType;
-      if (debouncedSearch) queryParams.search = debouncedSearch;
 
-      const fetchedCampaigns = await getCampaignAction(queryParams);
-      console.log('fetchedCampaigns', fetchedCampaigns)
-      // @ts-ignore
-      setData(fetchedCampaigns.data.map((current) => ({
-        id: current.id,
-        name: current.name,
-        spend: current.metrics?.cost_micros / 1e6 || 0,
-        impressions: current.metrics?.impressions || 0,
-        clicks: current.metrics?.clicks || 0,
-        ctr: current.metrics?.ctr ? `${(current.metrics.ctr * 100).toFixed(2)}%` : '-',
-        conversions: current.metrics?.conversions || 0,
-        cr: current.metrics?.cr ? `${(current.metrics.cr * 100).toFixed(2)}%` : '-',
-        ecpa: current.metrics?.ecpa ? `$${(current.metrics.ecpa / 1e6).toFixed(2)}` : '-',
-        status: current.status,
-        checked: false,
-        bidding_strategy: current.bidding_strategy_type,
-        type: current.campaign_type === 'PERFORMANCE_MAX' ? 'PERFORMACE' : current.campaign_type,
-        avg_cpc: current.metrics?.average_cpc ? current.metrics.average_cpc / 1e6 : 0,
-        bid_value: current.ad_group?.cpm_bid_micros ? current.ad_group?.cpm_bid_micros / 1e6 : 0,
-      })));
+      setLoading(true);
+      try {
+        console.log('currentPage', currentPage);
+        let queryParams: getCampaignsParams = { per_page: PAGE_SIZE, page_number: currentPage + 1 };
+        if (status) queryParams.status = status;
+        if (startDate) queryParams.start_date = startDate;
+        if (endDate) queryParams.end_date = endDate;
+        if (campaignType) queryParams.campaign_type = campaignType;
+        if (debouncedSearch) queryParams.search = debouncedSearch;
 
-      // @ts-ignore
-      setPageCount(Math.ceil(fetchedCampaigns.pagination.total / PAGE_SIZE))
+        const fetchedCampaigns = await getCampaignAction(queryParams);
+        console.log('fetchedCampaigns', fetchedCampaigns)
+        // @ts-ignore
+        setData(fetchedCampaigns.data.map((current) => ({
+          id: current.id,
+          name: current.name,
+          spend: current.metrics?.cost_micros / 1e6 || 0,
+          impressions: current.metrics?.impressions || 0,
+          clicks: current.metrics?.clicks || 0,
+          ctr: current.metrics?.ctr ? `${(current.metrics.ctr * 100).toFixed(2)}%` : '-',
+          conversions: current.metrics?.conversions || 0,
+          cr: current.metrics?.cr ? `${(current.metrics.cr * 100).toFixed(2)}%` : '-',
+          ecpa: current.metrics?.ecpa ? `$${(current.metrics.ecpa / 1e6).toFixed(2)}` : '-',
+          status: current.status,
+          checked: false,
+          bidding_strategy: current.bidding_strategy_type,
+          type: current.campaign_type.toLowerCase(),
+          avg_cpc: current.metrics?.average_cpc ? current.metrics.average_cpc / 1e6 : 0,
+          bid_value: current.ad_group?.cpm_bid_micros ? current.ad_group?.cpm_bid_micros / 1e6 : 0,
+        })));
+
+        // @ts-ignore
+        setPageCount(Math.ceil(fetchedCampaigns.pagination.total / PAGE_SIZE))
+
+      } finally {
+        setLoading(false);
+      }
+
     }
     fetchCampaigns();
   }, [currentPage, startDate, campaignType, debouncedSearch, endDate, status]);
@@ -158,7 +169,7 @@ export default function CampaignPage() {
     { key: 'ctr', label: 'CTR' },
     { key: 'conversions', label: 'Conversions' },
     { key: 'type', label: 'Type' },
-    { key: 'bidding_strategy', label: 'Bidding Strategy' },
+    // { key: 'bidding_strategy', label: 'Bidding Strategy' },
     { key: 'bid_value', label: 'Bid Value' },
     { key: 'avg_cpc', label: 'Avg CPC' },
     { key: 'status', label: 'Status', custom: true },
@@ -307,6 +318,7 @@ export default function CampaignPage() {
           <div className="w-full overflow-x-auto">
             <div className="min-w-[900px]">
               <Table
+                loading={loading}
                 columns={columns}
                 data={data}
                 toggleRow={toggleRow}

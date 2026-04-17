@@ -15,6 +15,7 @@ import Demography from '@/components/campaign/components/edit/Demography';
 import Miscelleneous from '@/components/campaign/components/edit/Miscellaneous';
 
 interface Props {
+  loading?: boolean;
   onNext: () => void;
   isActive: boolean;
   isDisabled?: boolean;
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export default function Targeting({
+  loading,
   onNext,
   isActive,
   isDisabled,
@@ -57,6 +59,7 @@ export default function Targeting({
   const [banner, setBanner] = useState(false);
   const [interstitial, setInterstitial] = useState(false);
   const [video, setVideo] = useState(false);
+
 
   if (isDisabled) {
     return (

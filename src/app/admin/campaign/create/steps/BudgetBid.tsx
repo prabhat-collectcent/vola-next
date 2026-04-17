@@ -5,6 +5,9 @@ import Text from '@/components/admin/form/fields/Text';
 import Select from '@/components/admin/form/fields/Select';
 import { useCampaign } from '../context/CampaignContext';
 import { CampaignBudgetSchema } from '@/lib/validations/camapaign.validation';
+import { useToast } from '@/components/toast/ToastProvider';
+import { createCampaignAction } from '@/actions/campaign.actions';
+import { useRouter } from 'next/navigation';
 
 interface Props {
   isActive: boolean;
@@ -13,16 +16,13 @@ interface Props {
 }
 
 export default function BudgetBid({ isActive, isDisabled, onToggle }: Props) {
-  const [totalBudget, setTotalBudget] = useState('');
-  const [dailyBudget, setDailyBudget] = useState('');
-  const [bidType, setBidType] = useState('');
-  const [amount, setAmount] = useState('');
-  const [dailyCap, setDailyCap] = useState('');
 
-  const { state, dispatch } = useCampaign()
-
+  const { state, dispatch } = useCampaign();
+  const options = state.campaign_type === 'DISPLAY' ? [{ label: 'CPM', value: 'cpm' }] : [{ label: 'CPI', value: 'cpi' }]
   const [errors, setErrors] = useState<Record<string, string>>({})
-
+  const [isLoading, setIsLoading] = useState(false);
+  const { showToast } = useToast();
+  const router = useRouter();
 
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,7 +36,7 @@ export default function BudgetBid({ isActive, isDisabled, onToggle }: Props) {
     })
   }
 
-  function handleNextStep() {
+  async function submitCampaign() {
     console.log("current state", state)
     const result = CampaignBudgetSchema.safeParse({ budget: state.budget, bid_value: state.bid_value });
     console.log("validation result", result)
@@ -54,6 +54,36 @@ export default function BudgetBid({ isActive, isDisabled, onToggle }: Props) {
     }
 
     setErrors({})
+
+    setIsLoading(true);
+    console.log("final state before submission", state)
+    state.geo_include = state.geo_include.map((loc) => { return { canonicalName: loc.canonicalName, geoId: loc.geoTargetConstant, source: loc.source } });
+    state.geo_exclude = state.geo_exclude.map((loc) => { return { canonicalName: loc.canonicalName, geoId: loc.geoTargetConstant, source: loc.source } });
+    // @ts-ignore
+    state.mobile_carriers = state.mobile_carriers.map((carrier) => carrier.resourceName);
+
+    try {
+
+      const apiResponse: any = await createCampaignAction(state);
+      console.log("response object")
+      console.log(apiResponse);
+
+
+      if (apiResponse?.success) {
+        const campaignId = apiResponse.response.id;
+        showToast('Campaign created successfully', 'success');
+        router.push(`/admin/campaign/create/creatives?id=${campaignId}`)
+      } else {
+        // @ts-ignore
+        showToast(apiResponse?.message || 'Something went wrong', 'error');
+      }
+
+    } catch (error) {
+      showToast((error as Error)?.message || 'Something went wrong', 'error');
+    } finally {
+      setIsLoading(false)
+    }
+
   }
 
 
@@ -108,7 +138,7 @@ export default function BudgetBid({ isActive, isDisabled, onToggle }: Props) {
 
             <Text
               type='number'
-              label="Daily Budget"
+              label="Daily Budget $"
               name="budget"
               value={state.budget || ''}
               onChange={handleChange}
@@ -124,18 +154,16 @@ export default function BudgetBid({ isActive, isDisabled, onToggle }: Props) {
             <Select
               label="Bid"
               name="bidType"
-              value="cpm"
+              value={state.campaign_type === 'DISPLAY' ? 'cpm' : 'cpi'}
               // onChange={handleChange}
               placeholder="CPM"
               className="mb-[24px]"
-              options={[
-                { label: 'CPM', value: 'cpm' }
-              ]}
+              options={options}
             />
 
             <Text
               type='number'
-              label="Amount"
+              label="Amount $"
               name="bid_value"
               value={state.bid_value || ''}
               onChange={handleChange}
@@ -150,12 +178,30 @@ export default function BudgetBid({ isActive, isDisabled, onToggle }: Props) {
 
           {/* Next */}
           <div className="flex justify-end">
-            <button
+            {/* <button
               onClick={handleNextStep}
               className="px-4 py-2 bg-indigo-800 rounded-full text-white text-sm"
             >
               Next
+            </button> */}
+
+            <button
+              onClick={submitCampaign}
+              disabled={isLoading}
+              className={`self-end mt-6 px-6 py-2 rounded-lg text-white flex items-center gap-2
+    ${isLoading ? 'bg-indigo-300 cursor-not-allowed' : 'bg-[#4144E6]'}
+  `}
+            >
+              {isLoading ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  Creating...
+                </>
+              ) : (
+                'Create Campaign'
+              )}
             </button>
+
           </div>
 
 

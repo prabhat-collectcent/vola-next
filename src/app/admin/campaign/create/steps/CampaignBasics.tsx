@@ -15,38 +15,71 @@ interface Props {
 
 }
 
+export const eventOptions = [
+  { label: 'af_home_page', value: 'af_home_page' },
+  { label: 'af_food_du_purchase_v2', value: 'af_food_du_purchase_v2' },
+  { label: 'af_first_order', value: 'af_first_order' },
+  { label: 'instamart_first_order', value: 'instamart_first_order' },
+  { label: 'instamart_du_purchase', value: 'instamart_du_purchase' },
+  { label: 'af_app_launch', value: 'af_app_launch' },
+  { label: 'instamart_purchase', value: 'instamart_purchase' },
+  { label: 'instamart_homepage_view', value: 'instamart_homepage_view' },
+];
+
 export default function CampaignBasics({
   onNext,
   isActive,
   isDisabled,
   onToggle,
 }: Props) {
-  const [objective, setObjective] = useState<"DISPLAY" | "PERFORMANCE_MAX">(
+  const [objective, setObjective] = useState<"DISPLAY" | "PERFORMANCE">(
     'DISPLAY'
   );
 
-  const [campaignName, setCampaignName] = useState('');
+
   const [campaignUrl, setCampaignUrl] = useState('');
+
+  const [event, setEvent] = useState('');
   const [packageUrl, setPackageUrl] = useState('');
   const [platform, setPlatform] = useState('');
-  const [adType, setAdType] = useState<'display' | 'video' | 'ctv' | ''>('');
   const [attribution, setAttribution] = useState<string>('');
+
+  const [adType, setAdType] = useState<'display' | 'video' | 'ctv' | ''>('');
+
 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const { state, dispatch } = useCampaign()
+  const { state, dispatch } = useCampaign();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+  type ChangeEventType =
+    | React.ChangeEvent<HTMLInputElement>
+    | { name: string; value: any };
+
+  const handleChange = (e: ChangeEventType) => {
+    let name: string;
+    let value: any;
+
+    if ("target" in e) {
+      // Native input
+      name = e.target.name;
+      value = e.target.value;
+    } else {
+      // Custom component (Select etc.)
+      name = e.name;
+      value = e.value;
+    }
 
     dispatch({
       type: "SET_FIELD",
       payload: {
-        name: e.target.value
-      }
-    })
-  }
+        [name]: value,
+      },
+    });
 
-  const handleObjectiveChange = (objective: "PERFORMACE_MAX" | "DISPLAY") => {
+  };
+
+  const handleObjectiveChange = (objective: "PERFORMANCE" | "DISPLAY") => {
     // @ts-ignore
     setObjective(objective)
 
@@ -64,7 +97,7 @@ export default function CampaignBasics({
 
 
     const result = CampaignBasicSchema.safeParse({ name: state.name });
-    console.log("validation result", result)
+
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
 
@@ -133,7 +166,7 @@ export default function CampaignBasics({
                   icon: '/branding-icon.svg',
                 },
                 {
-                  key: 'PERFORMANCE_MAX',
+                  key: 'PERFORMANCE',
                   label: 'App Performance',
                   desc: 'Optimize delivery to drive actions and measurable results.',
                   icon: '/performance-icon.svg',
@@ -176,7 +209,7 @@ export default function CampaignBasics({
               <>
                 <Text
                   label="Campaign Name*"
-                  name="campaignName"
+                  name="name"
                   value={state.name}
                   onChange={handleChange}
                   placeholder="Enter Campaign Name"
@@ -184,7 +217,7 @@ export default function CampaignBasics({
                   error={errors.name}
 
                 />
-
+                {/* 
                 <Text
                   label="Campaign URL*"
                   name="campaignUrl"
@@ -193,7 +226,7 @@ export default function CampaignBasics({
                   onChange={(val: string) => setCampaignUrl(val)}
                   placeholder="Enter Campaign URL"
                   className="mb-[24px]"
-                />
+                /> */}
 
                 {/* Ad Type */}
                 <div className="flex gap-4">
@@ -232,7 +265,7 @@ export default function CampaignBasics({
               <>
                 <Text
                   label="Campaign Name*"
-                  name="campaignName"
+                  name="name"
                   value={state.name}
                   onChange={handleChange}
                   placeholder="Enter Campaign Name"
@@ -244,8 +277,10 @@ export default function CampaignBasics({
                 <Select
                   label="Platform*"
                   name="platform"
-                  value={platform}
-                  onChange={(val: string) => setPlatform(val)}
+                  value={state.platform}
+                  onChange={(value) =>
+                    handleChange({ name: "platform", value })
+                  }
                   placeholder="Select Platform"
                   className="mb-[24px]"
                   options={[
@@ -257,20 +292,22 @@ export default function CampaignBasics({
 
                 <Text
                   label="App Package Name / App Store URL*"
-                  name="packageUrl"
-                  value={packageUrl}
-                  onChange={(val: string) => setPackageUrl(val)}
+                  name="package_name"
+                  value={state.package_name}
+                  onChange={handleChange}
                   placeholder="Enter package name/app store URL"
                   className="mb-[24px]"
                 />
 
-                <Text
-                  label="App Id"
-                  name="packageUrl"
-                  value={packageUrl}
-                  onChange={(val: string) => setPackageUrl(val)}
-                  placeholder="Enter package name/app store URL"
+                <Select
+                  label="Event*"
+                  name="event"
+                  value={state.event}
+                  onChange={(value) =>
+                    handleChange({ name: "event", value })
+                  } placeholder="Select Event"
                   className="mb-[24px]"
+                  options={eventOptions}
                 />
 
 
@@ -288,7 +325,8 @@ export default function CampaignBasics({
                       <div
                         key={item.key}
                         onClick={() => setAttribution(item.key)}
-                        className={`w-28 rounded-xl flex items-center justify-center cursor-pointer ${attribution === item.key
+                        // as of now only appsflyer is supported, so only that is selectable
+                        className={`w-28 rounded-xl flex items-center justify-center cursor-pointer ${item.key === 'appsflyer'
                           ? 'outline outline-1 outline-[#4144E6]'
                           : 'outline outline-1 outline-zinc-100'
                           }`}

@@ -5,6 +5,7 @@ import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
 interface TableProps {
+  loading?: boolean;
   columns: any[];
   data: any[];
   toggleRow: (id: number) => void;
@@ -18,6 +19,7 @@ interface TableProps {
 }
 
 export default function Table({
+  loading,
   columns,
   data,
   toggleRow,
@@ -49,7 +51,7 @@ export default function Table({
                 type="checkbox"
                 checked={data.length > 0 && data.every((x) => x.checked)}
                 onChange={(e) => toggleAll(e.target.checked)}
-                onClick={(e) => e.stopPropagation()} 
+                onClick={(e) => e.stopPropagation()}
                 disabled={data.length === 0}
               />
               {data.length > 0 && data.every((x) => x.checked) && (
@@ -85,7 +87,18 @@ export default function Table({
       </thead>
 
       <tbody>
-        {data.length === 0 ? (
+        {
+        
+        loading ? (
+        <tr>
+          <td
+            colSpan={columns.length + 1}
+            className="py-[32px] text-center text-[12px] text-[#8E8E93]"
+          >
+            Loading...
+          </td>
+        </tr>
+        ) : data.length === 0 ? (
           <tr>
             <td
               colSpan={columns.length + 1}

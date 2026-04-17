@@ -6,7 +6,7 @@ import { ToastProvider } from '@/components/toast/ToastProvider';
 
 export const metadata: Metadata = {
   title: 'Vola Ad',
-  description: 'Next.js App with Inter Font',
+  description: 'Vola Ad',
 };
 
 export default function RootLayout({

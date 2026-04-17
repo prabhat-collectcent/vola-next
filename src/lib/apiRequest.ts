@@ -3,15 +3,13 @@ export async function apiRequest<T>(
 ): Promise<T> {
   try {
     const res = await request();
-
-    console.log("api success:", res.data);
-
+    // console.log("api success:", res.data);
     return res.data;
   } catch (error: any) {
     console.error("api error:", error);
 
     if (error?.response) {
-      console.error("server response:", error.response.data);
+      console.error("server response:", JSON.stringify(error.response.data));
     }
 
     let message = error?.response?.data?.message || error.message || "request failed";

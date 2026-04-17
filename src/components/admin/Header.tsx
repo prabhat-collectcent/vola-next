@@ -23,11 +23,11 @@ export default function Header({
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
 
- const defaultAvtar = '/person.png'
+  const defaultAvtar = '/person.png'
 
-const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
 
- useEffect(() => {
+  useEffect(() => {
     async function fetchUserProfile() {
       const result = await getProfileAction();
       const userData = (result as any).data.user;
@@ -42,11 +42,11 @@ const [user, setUser] = useState<any>(null);
     fetchUserProfile();
   }, []);
 
-  
+
 
 
   function handleLogout() {
-        signOut({
+    signOut({
       callbackUrl: "/auth/login",
     });
   }
@@ -83,7 +83,7 @@ const [user, setUser] = useState<any>(null);
             sx={{ fontSize: 16, color: '#1C1B1F' }}
           />
           <span className="text-sm font-light text-neutral-600">Balance:</span>
-          <span className="text-sm font-normal text-indigo-800">$4001</span>
+          <span className="text-sm font-normal text-indigo-800">${user?.balance ?? '0.00'}</span>
         </div>
       </div>
 
@@ -207,7 +207,7 @@ const [user, setUser] = useState<any>(null);
                 {/* Mobile Balance */}
                 <div className="md:hidden px-2 py-1 bg-sky-50 rounded text-xs">
                   <span className="text-neutral-600">Balance:</span>{' '}
-                  <span className="text-indigo-800 font-medium">$4001</span>
+                  <span className="text-indigo-800 font-medium">${user?.balance ?? '0.00'}6</span>
                 </div>
 
                 <div className="h-px bg-gray-200" />

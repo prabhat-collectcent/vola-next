@@ -9,34 +9,51 @@ export default function IpExclusionBox() {
     const [error, setError] = useState("");
 
     const { state, dispatch } = useCampaign();
-
     const selectedIps = state.ip_exclusions || [];
-
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
         setIp(e.target.value);
     }
 
     function addIp(e: React.KeyboardEvent<HTMLInputElement>) {
-
         if (e.key !== "Enter") return;
-        if (!ip.trim()) return;
-        if (selectedIps.includes(ip)) return;
-        if (!ipRegex.test(ip)) {
-            setError("Please enter a valid IP address");
-            return;
-        };
-        setError("");
 
-        dispatch({
-            type: "SET_FIELD",
-            payload: {
-                ip_exclusions: [...selectedIps, ip],
-            },
+        const raw = ip.trim();
+        if (!raw) return;
+
+        const ips = raw.split(",").map(i => i.trim()).filter(Boolean);
+
+        const validIps: string[] = [];
+        const invalidIps: string[] = [];
+
+        ips.forEach((singleIp) => {
+            if (!ipRegex.test(singleIp)) {
+                invalidIps.push(singleIp);
+            } else if (!selectedIps.includes(singleIp) && !validIps.includes(singleIp)) {
+                validIps.push(singleIp);
+            }
         });
 
-        setIp("");
+        if(validIps.length > 500) {
+            setError('Maximum 500 IPs can be added at once');
+        }
 
+        if (invalidIps.length > 0) {
+            setError(`Invalid IP(s): ${invalidIps.join(", ")}`);
+        } else {
+            setError("");
+        }
+
+        if (validIps.length > 0) {
+            dispatch({
+                type: "SET_FIELD",
+                payload: {
+                    ip_exclusions: [...selectedIps, ...validIps],
+                },
+            });
+        }
+
+        setIp("");
     }
 
     function removeIp(ip: string) {
@@ -51,8 +68,6 @@ export default function IpExclusionBox() {
     return (
         <div className="mb-6">
 
-
-            {/* Input */}
             <div className="relative">
                 <Text
                     name="ip_exclusions"
@@ -61,11 +76,12 @@ export default function IpExclusionBox() {
                     onChange={handleChange}
                     onKeyDown={addIp}
                     error={error}
-                    placeholder="Enter ip address and press enter to add"
+                    warning='Maximum 500 IPs can be added at once'
+                    placeholder="Enter IPs (comma separated) and press Enter"
                 />
             </div>
 
-            {/* Selected Chips */}
+            {/* Chips */}
             <div className="flex flex-wrap gap-2 mt-3">
                 {selectedIps.map((ip) => (
                     <div
@@ -73,7 +89,6 @@ export default function IpExclusionBox() {
                         className="flex items-center bg-gray-100 rounded-full px-3 py-1 text-sm"
                     >
                         {ip}
-
                         <button
                             type="button"
                             onClick={() => removeIp(ip)}
@@ -86,5 +101,4 @@ export default function IpExclusionBox() {
             </div>
         </div>
     );
-
 }

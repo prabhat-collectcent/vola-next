@@ -6,7 +6,14 @@ export const initialCampaignState: CampaignState = {
     bid_value: 0,
     start_date: "",
     end_date: "",
-    status :'PAUSED',
+    status: 'PAUSED',
+    campaign_type: 'DISPLAY',
+
+
+    event: '',
+    platform: '',
+    package_name: '',
+    attribution_partner: '',
 
     geo_include: [],
     geo_exclude: [],
@@ -22,5 +29,7 @@ export const initialCampaignState: CampaignState = {
 
     mobile_carriers: [],
 
-    schedules: []
+    schedules: [],
+
+    countries: []
 }

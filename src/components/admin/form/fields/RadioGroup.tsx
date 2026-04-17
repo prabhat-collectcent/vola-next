@@ -60,7 +60,7 @@ export default function RadioGroup({
               required={required}
               className={`accent-[#4144E6] ${radioClassName}`}
             />
-            <span className="text-xs">{opt.label}</span>
+            <span className="text-sm">{opt.label}</span>
           </label>
         ))}
       </div>

@@ -1,9 +1,9 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { loginSchema } from "@/lib/validations/login";
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { signIn } from 'next-auth/react';
 import FormTextField from '@/components/form/fields/Text';
 import FormPasswordField from '@/components/form/fields/Password';
@@ -11,6 +11,19 @@ import { useToast } from '@/components/toast/ToastProvider';
 import Submit from '@/components/form/Submit';
 
 export default function SignInForm() {
+
+  const searchParams = useSearchParams();
+
+  const hasShownToast = useRef(false);
+
+  useEffect(() => {
+    if (searchParams.get('success') === 'true' && !hasShownToast.current) {
+      showToast(`registered successfully, your account has been sent to review, once its approved you'll recieved a confirmation email`, 'success');
+      hasShownToast.current = true;
+    }
+  }, [searchParams]);
+
+
   const { showToast } = useToast();
   const router = useRouter();
 
@@ -55,7 +68,7 @@ export default function SignInForm() {
       email,
       password,
       redirect: false,
-      callbackUrl:'/admin/dashboard/home'
+      callbackUrl: '/admin/dashboard/home'
     });
 
     setLoading(false);

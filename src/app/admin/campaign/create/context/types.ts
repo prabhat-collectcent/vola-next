@@ -34,6 +34,11 @@ export interface CampaignState {
     status: 'ENABLED' | 'PAUSED',
     campaign_type: 'DISPLAY' | 'PERFORMANCE_MAX'
 
+    event?: string,
+    platform?: string,
+    package_name?: string,
+    attribution_partner?: string,
+
     geo_include: any[]
     geo_exclude: any[]
 
@@ -50,6 +55,8 @@ export interface CampaignState {
     ip_exclusions: string[]
 
     schedules: Schedule[]
+
+    countries?: { countryCode: string, name: string }[];
 }
 
 export type CampaignAction =

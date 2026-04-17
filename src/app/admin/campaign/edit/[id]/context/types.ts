@@ -73,6 +73,13 @@ export interface CampaignState {
   bid_value: number
   start_date: string
   end_date: string
+  campaign_type: string
+
+  event?: string,
+  platform?: string,
+  package_name?: string,
+  attribution_partner?: string,
+
 
   geo_include: any[]
   geo_exclude: any[]
@@ -110,7 +117,9 @@ export interface CampaignState {
   addedCarriers: string[],
   removedCarriers: number[]
 
-  schedules: ScheduleCampaignCriterion[]
+  schedules: ScheduleCampaignCriterion[],
+
+  country?: string;
 }
 
 export type CampaignAction =

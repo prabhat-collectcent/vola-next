@@ -1,5 +1,7 @@
-import React from 'react';
 
-export default function Report() {
-  return <div className=""></div>;
+import Report from './Report';
+export default function ReportPage() {
+  return (
+    <Report/>
+  )
 }

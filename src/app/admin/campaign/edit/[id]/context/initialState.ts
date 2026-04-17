@@ -6,6 +6,7 @@ export const initialCampaignState: CampaignState = {
     bid_value: 0,
     start_date: "",
     end_date: "",
+    campaign_type:'',
 
     geo_include: [],
     geo_exclude: [],

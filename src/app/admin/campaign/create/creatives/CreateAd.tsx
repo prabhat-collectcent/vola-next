@@ -5,6 +5,7 @@ import { useCampaign } from "../context/CampaignContext";
 import { useToast } from "@/components/toast/ToastProvider";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
+import { uploadCreativesAction } from "@/actions/campaign.actions";
 
 type Props = {
   adGroupResourceName: string;
@@ -15,8 +16,8 @@ type FormDataType = {
   final_url: string;
   business_name: string;
   long_headline: string;
-  headlines: string[];
-  descriptions: string[];
+  headline: string;
+  description: string;
   marketing_images: FileList | [];
   square_marketing_images: FileList | [];
 };
@@ -25,42 +26,36 @@ export default function UploadCreatives() {
 
   const searchParams = useSearchParams();
   const { showToast } = useToast();
-    const router = useRouter();
-  
+  const router = useRouter();
 
-  const adGroup = decodeURIComponent(searchParams.get('adGroup') || '');
-  console.log("adGroup", adGroup)
 
-  // if (!adGroup) {
-  //   showToast('Something went wrong!', 'error');
+  const campaignId = decodeURIComponent(searchParams.get('id') || '');
+  console.log("campaignId", campaignId)
 
-  // }
+  if (!campaignId) {
+    showToast('Something went wrong!', 'error');
+
+  }
 
   const [formData, setFormData] = useState<FormDataType>({
     final_url: "",
     business_name: "",
     long_headline: "",
-    headlines: [""],
-    descriptions: [""],
+    headline: "",
+    description: "",
     marketing_images: [],
     square_marketing_images: [],
   });
 
   const handleChange = (
-    e: ChangeEvent<HTMLInputElement>,
-    index?: number,
-    type?: "headlines" | "descriptions"
+    e: ChangeEvent<HTMLInputElement>
   ) => {
-    if (type === "headlines" || type === "descriptions") {
-      const arr = [...formData[type]];
-      arr[index!] = e.target.value;
-      setFormData({ ...formData, [type]: arr });
-    } else {
-      setFormData({ ...formData, [e.target.name]: e.target.value });
-    }
+
+    setFormData({ ...formData, [e.target.name]: e.target.value })
   };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    console.log("handle file change called");
     const { name, files, dataset } = e.target;
     const max = parseInt(dataset.max || "15");
 
@@ -69,42 +64,50 @@ export default function UploadCreatives() {
       e.target.value = "";
       return;
     }
+    console.log("files", files)
 
     setFormData({ ...formData, [name]: files || [] });
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    router.push(`/admin/campaign`)
-
 
     const data = new FormData();
 
-    // @ts-ignore
-    data.append("adGroupResourceName", adGroupResourceName);
-    // @ts-ignore
-    data.append("campaign_id", campaignId || "");
+    data.append("campaign_id", campaignId);
     data.append("final_url", formData.final_url);
     data.append("business_name", formData.business_name);
     data.append("long_headline", formData.long_headline);
+    data.append("headlines[]", formData.headline);
+    data.append("descriptions[]", formData.description);
 
-    formData.headlines.forEach((h) => data.append("headlines[]", h));
-    formData.descriptions.forEach((d) => data.append("descriptions[]", d));
+    Array.from(formData.marketing_images || []).forEach((file) => data.append("marketing_images[]", file));
 
-    Array.from(formData.marketing_images || []).forEach((file) =>
-      data.append("marketing_images[]", file)
-    );
-
-    Array.from(formData.square_marketing_images || []).forEach((file) =>
-      data.append("square_marketing_images[]", file)
-    );
+    Array.from(formData.square_marketing_images || []).forEach((file) => data.append("square_marketing_images[]", file));
 
 
-    console.log("form data", formData, data.getAll('final_url'))
-    // await fetch("/google-ads/creatives/upload", {
-    //   method: "POST",
-    //   body: data,
-    // });
+    console.log("form data", formData, data.getAll('final_url'));
+
+    try {
+      //@ts-ignore
+      const apiResponse: any = await uploadCreativesAction(data);
+      console.log("response object")
+      console.log(apiResponse);
+
+
+      if (apiResponse?.success) {
+        showToast('Creatives uploaded successfully', 'success');
+        router.push(`/admin/campaign`);
+      } else {
+        // @ts-ignore
+        showToast(apiResponse?.message || 'Something went wrong', 'error');
+      }
+
+    } catch (error) {
+      // @ts-ignore
+      console.log("api error response", error);
+      showToast((error as Error)?.message || 'Something went wrong', 'error');
+    }
   };
 
   return (
@@ -137,7 +140,7 @@ export default function UploadCreatives() {
             name="business_name"
             value={formData.business_name}
             onChange={handleChange}
-            placeholder="Interplanetary Travel Inc"
+            placeholder="Company Name"
             required
             className="w-full h-[41px] text-xs bg-white rounded-[13px] px-3 border border-[#79747EA8] focus:border-[#4144E6]"
           />
@@ -147,39 +150,37 @@ export default function UploadCreatives() {
         <div className="bg-white border border-neutral-100 rounded-2xl p-6">
           <div className="text-sm font-medium mb-4">Ad Copy</div>
 
-          <div className="text-[13px] mb-2 text-[#1E1E1E]">Headlines</div>
-          {formData.headlines.map((h, i) => (
-            <input
-              key={i}
-              type="text"
-              value={h}
-              onChange={(e) => handleChange(e, i, "headlines")}
-              placeholder={`Headline ${i + 1}`}
-              className="w-full h-[41px] text-xs bg-white rounded-[13px] px-3 border border-[#79747EA8] mb-3"
-            />
-          ))}
+          <div className="text-[13px] mb-2 text-[#1E1E1E]">Text which will be used to match different ad placements *</div>
+          <input
+            type="text"
+            name="headline"
+            value={formData.headline}
+            onChange={handleChange}
+            placeholder="Headline"
+            className="w-full h-[41px] text-xs bg-white rounded-[13px] px-3 border border-[#79747EA8] mb-3"
+          />
 
-          <div className="text-[13px] mb-2 text-[#1E1E1E]">Long Headline *</div>
+
+          <div className="text-[13px] mb-2 text-[#1E1E1E]">Long text which will be used to match different ad placements *</div>
           <input
             type="text"
             name="long_headline"
             value={formData.long_headline}
             onChange={handleChange}
+            placeholder="Long Headline"
             required
             className="w-full h-[41px] text-xs bg-white rounded-[13px] px-3 border border-[#79747EA8] mb-4"
           />
 
-          <div className="text-[13px] mb-2 text-[#1E1E1E]">Descriptions</div>
-          {formData.descriptions.map((d, i) => (
-            <input
-              key={i}
-              type="text"
-              value={d}
-              onChange={(e) => handleChange(e, i, "descriptions")}
-              placeholder={`Description ${i + 1}`}
-              className="w-full h-[41px] text-xs bg-white rounded-[13px] px-3 border border-[#79747EA8] mb-3"
-            />
-          ))}
+          <div className="text-[13px] mb-2 text-[#1E1E1E]">Description for mixing and matching these assets based on the specific available slot</div>
+          <input
+            name="description"
+            type="text"
+            value={formData.description}
+            onChange={handleChange}
+            placeholder={`Description`}
+            className="w-full h-[41px] text-xs bg-white rounded-[13px] px-3 border border-[#79747EA8] mb-3"
+          />
         </div>
 
         {/* Creative Assets */}
@@ -203,13 +204,13 @@ export default function UploadCreatives() {
               />
 
               <div className="text-xs text-gray-500 mt-1">
-                Recommended: 1200 × 628
+                Recommended size: 1200 × 628 px (Maximum 15 images allowed)
               </div>
             </div>
 
             <div>
               <div className="text-[13px] mb-2 text-[#1E1E1E]">
-                Square Images *
+                Square Marketing Images *
               </div>
 
               <input
@@ -222,7 +223,7 @@ export default function UploadCreatives() {
               />
 
               <div className="text-xs text-gray-500 mt-1">
-                Recommended: 1200 × 1200
+                Recommended size: 1200 × 1200 px (Maximum 15 images allowed)
               </div>
             </div>
 

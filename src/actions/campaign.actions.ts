@@ -1,6 +1,6 @@
 'use server';
 
-import { createCampaign, getCampaignById, getCampaigns, getCampaignsParams, updateCampaignBasic, updateCampaignBasicPayload, updateCampaignDemographyPayload, updateCampaignDemographyTargeting, updateCampaignGeoTargeting, updateCampaignGeoTargetingPayload, updateCampaignMiscellaneousTargeting, updateCampaignSchedule, updateCampaignSchedulePayload, updateMiscellaneousPayload, uploadCreativePayload, uploadCreatives } from "@/services/campaign.service";
+import { createCampaign, getCampaignById, getCampaignReport, getCampaigns, getCampaignsParams, getTotalStats, updateCampaignBasic, updateCampaignBasicPayload, updateCampaignDemographyPayload, updateCampaignDemographyTargeting, updateCampaignGeoTargeting, updateCampaignGeoTargetingPayload, updateCampaignMiscellaneousTargeting, updateCampaignSchedule, updateCampaignSchedulePayload, updateMiscellaneousPayload, uploadCreativePayload, uploadCreatives } from "@/services/campaign.service";
 
 export async function createCampaignAction(payload: any) {
 
@@ -49,4 +49,14 @@ export async function uploadCreativesAction(payload: uploadCreativePayload) {
   const result = await uploadCreatives(payload);
   return result;
 
+}
+
+export async function getCampaignReportAction() {
+  const result = await getCampaignReport();
+  return result;
+}
+
+export async function getTotalStatsAction(){
+  const result  =  await getTotalStats();
+  return result;
 }

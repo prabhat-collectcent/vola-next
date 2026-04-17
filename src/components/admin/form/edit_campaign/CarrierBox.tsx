@@ -18,11 +18,11 @@ export default function CarrierBox() {
         async function fetchCarriers() {
             const fetchedCarriers = await getMobileCarrersAction();
             // @ts-ignore
-            setCarriers(fetchedCarriers.results.map((carrier) => ({
-                id: carrier.carrierConstant.id,
-                name: carrier.carrierConstant.name,
-                countryCode: carrier.carrierConstant.countryCode,
-                resourceName: carrier.carrierConstant.resourceName,
+            setCarriers(fetchedCarriers.data.map((carrier) => ({
+                id: carrier.google_id,
+                name: carrier.name,
+                countryCode: carrier.country_code,
+                resourceName: carrier.google_resource_name,
             })));
         }
         fetchCarriers();

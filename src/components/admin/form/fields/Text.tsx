@@ -6,6 +6,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   name: string;
   error?: string;
+  warning?: string;
   className?: string;
 }
 
@@ -18,6 +19,7 @@ export default function Input({
   onChange,
   onKeyDown,
   error,
+  warning,
   required = false,
   className = '',
   ...rest
@@ -63,6 +65,8 @@ export default function Input({
       />
 
       {error && <div className="text-[11px] text-red-400 mt-1">{error}</div>}
+      {warning && <div className="text-[11px] text-amber-400 mt-1">{warning}</div>}
+
     </div>
   );
 }

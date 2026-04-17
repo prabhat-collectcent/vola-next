@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Select from '@/components/admin/form/fields/Select';
 import RadioGroup from '@/components/admin/form/fields/RadioGroup';
 import Checkbox from '@/components/admin/form/fields/Checkbox';
@@ -11,6 +11,9 @@ import IpExclusionBox from '@/components/admin/form/IPExclusionBox';
 import CarrierBox from '@/components/admin/form/CarrierBox';
 import Devices from '@/components/admin/form/Devices';
 import Demography from '@/components/admin/form/Demography';
+import { getCountryListAction } from '@/actions/metadata.actions';
+import { useToast } from '@/components/toast/ToastProvider';
+import CountrySearchBox from '@/components/admin/form/CountrySearchBox';
 
 interface Props {
   onNext: () => void;
@@ -26,15 +29,36 @@ export default function Targeting({
   onToggle,
 }: Props) {
 
+  const { showToast } = useToast();
+
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const { state, dispatch } = useCampaign()
+  const { state, dispatch } = useCampaign();
+  const [countryList, setCountryList] = useState<{ label: string; value: string }[]>([]);
 
   const [activeTab, setActiveTab] = useState<'geo' | 'device' | 'adtype'>(
     'geo'
   );
 
+  useEffect(() => {
+
+    async function fetchCountryList() {
+      try {
+        const result: any = await getCountryListAction();
+        if (result.success) {
+          const countries = Object.keys(result.data).map((key) => {
+            return { label: result.data[key], value: key };
+          });
+          setCountryList(countries);
+        }
+
+      } catch (error) {
+        showToast('Failed to fetch country list', 'error');
+      }
+
+    }
+    fetchCountryList();
+  }, [])
   /* GEO */
-  const [country, setCountry] = useState('');
   // const [state, setState] = useState('');
   const [geoMode, setGeoMode] = useState('include');
   const [ipMode, setIpMode] = useState('include');
@@ -117,10 +141,24 @@ export default function Targeting({
         {/* GEO TAB */}
         {activeTab === 'geo' && (
           <div className="flex flex-col">
-            <LocationSearchBox title="Include locations" type="include" />
-            <LocationSearchBox title="Exclude locations" type="exclude" />
-            <IpExclusionBox />
+            <div className='mb-8'>
+              {/* <Select
+                label="Select Country"
+                name="country"
+                value={state.country}
+                error={errors.country}
+                onChange={handleCountryChange}
+                placeholder="Select Country"
+                options={countryList}
+              /> */}
+
+            </div>
+
+            <CountrySearchBox />
+            <LocationSearchBox title="Include locations" type="include" countryCodes={state.countries?.map(o => o.countryCode) ?? []} />
+            <LocationSearchBox title="Exclude locations" type="exclude" countryCodes={state.countries?.map(o => o.countryCode) ?? []} />
             <CarrierBox />
+            <IpExclusionBox />
 
 
           </div>
@@ -133,7 +171,7 @@ export default function Targeting({
 
         {/* AD TYPE TAB */}
         {activeTab === 'adtype' && (
-         <Demography/>
+          <Demography />
         )}
 
         {/* Next */}

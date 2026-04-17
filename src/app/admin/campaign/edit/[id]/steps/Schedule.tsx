@@ -28,6 +28,7 @@ const DAYS = [
 ];
 
 interface Props {
+  loading?: boolean;
   onNext: () => void;
   isActive: boolean;
   isDisabled?: boolean;
@@ -37,12 +38,14 @@ interface Props {
 const formatDate = (iso: string) => iso.split("T")[0];
 
 export default function Schedule({
+  loading,
   onNext,
   isActive,
   isDisabled,
   onToggle,
 }: Props) {
 
+  const [saving, setSaving] = useState(false);
   const { state, dispatch } = useCampaign()
 
   const { id } = useParams();
@@ -268,8 +271,10 @@ export default function Schedule({
   }
 
   async function handleNextStep() {
-    console.log("next step function calleds", weekDay, startHour, endHour, startMinute, endMinute)
+    console.log("next step function call", validate(), weekDay, startHour, endHour, startMinute, endMinute)
     if (!validate()) return;
+    let payload: updateCampaignSchedulePayload = {};
+    let data: any = [];
     if (dayParting === 'specific') {
       let data: any = [];
       if (weekDay === "all") {
@@ -304,37 +309,6 @@ export default function Schedule({
           }
         })
       }
-
-      const payload: updateCampaignSchedulePayload = {
-        addedSchedules: data,
-        removedSchedules: state.schedules.map(s => s.id)
-      };
-
-      if (formatDate(state.start_date) != startDate) payload.start_date = startDate;
-      if (formatDate(state.end_date) != startDate) payload.end_date = endDate;
-      try {
-
-        // console.log("update campaign schedule payload", payload);
-        const apiResponse: any = await updateCampaignScheduleAction(id as unknown as number, payload);
-
-        console.log("update schedule api res", apiResponse)
-
-        if ((apiResponse as any)?.success) {
-          showToast('Campaign schedule updated successfully', 'success');
-        } else {
-          showToast(apiResponse?.message || 'Something went wrong', 'error');
-          return;
-        }
-
-      } catch (error) {
-        showToast((error as Error)?.message || 'Something went wrong', 'error');
-        return;
-
-      }
-
-      onNext();
-
-
       // dispatch({
       //   type: "SET_FIELD",
       //   payload: {
@@ -342,9 +316,40 @@ export default function Schedule({
       //   }
       // });
 
-    }
-  }
+      payload = {
+        addedSchedules: data,
+        removedSchedules: state.schedules.map(s => s.id)
+      };
 
+    }
+
+    if (formatDate(state.start_date) != startDate) payload.start_date = startDate;
+    if (formatDate(state.end_date) != startDate) payload.end_date = endDate;
+    try {
+      setSaving(true);
+      // console.log("update campaign schedule payload", payload);
+      const apiResponse: any = await updateCampaignScheduleAction(id as unknown as number, payload);
+
+      console.log("update schedule api res", apiResponse)
+
+      if ((apiResponse as any)?.success) {
+        showToast('Campaign schedule updated successfully', 'success');
+      } else {
+        showToast(apiResponse?.message || 'Something went wrong', 'error');
+        return;
+      }
+
+    } catch (error) {
+      showToast((error as Error)?.message || 'Something went wrong', 'error');
+      return;
+
+    } finally {
+      setSaving(false);
+    }
+
+    onNext();
+
+  }
 
 
   if (isDisabled) {
@@ -362,6 +367,53 @@ export default function Schedule({
       </div>
     );
   }
+
+  if (loading) {
+    return (
+      <div className="w-full px-12 py-5 bg-white rounded-2xl border border-neutral-100">
+
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 rounded-full bg-gray-200 animate-pulse" />
+          <div className="h-5 w-32 bg-gray-200 rounded animate-pulse" />
+        </div>
+
+        {/* Body */}
+        <div className="mt-6 flex flex-col gap-6 animate-pulse">
+
+          {/* Date Fields */}
+          <div className="flex gap-3">
+            <div className="flex-1 h-10 bg-gray-200 rounded" />
+            <div className="flex-1 h-10 bg-gray-200 rounded" />
+          </div>
+
+          {/* Radio Group */}
+          <div className="space-y-3">
+            <div className="h-4 w-32 bg-gray-200 rounded" />
+            <div className="flex gap-4">
+              <div className="h-5 w-40 bg-gray-200 rounded" />
+              <div className="h-5 w-56 bg-gray-200 rounded" />
+            </div>
+          </div>
+
+          {/* Conditional section (always show skeleton to avoid jump) */}
+          <div className="flex gap-3">
+            <div className="flex-1 h-10 bg-gray-200 rounded" />
+            <div className="flex-1 h-10 bg-gray-200 rounded" />
+            <div className="flex-1 h-10 bg-gray-200 rounded" />
+            <div className="flex-1 h-10 bg-gray-200 rounded" />
+            <div className="flex-1 h-10 bg-gray-200 rounded" />
+          </div>
+
+          {/* Button */}
+          <div className="flex justify-end">
+            <div className="h-9 w-24 bg-gray-200 rounded-full" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <div className="w-full px-12 py-5 bg-white rounded-2xl border border-neutral-100 flex flex-col">
@@ -505,9 +557,19 @@ export default function Schedule({
           <div className="flex justify-end">
             <button
               onClick={handleNextStep}
-              className="px-4 py-2 bg-indigo-800 rounded-full text-white text-sm"
+              disabled={saving}
+              className={`px-4 py-2 rounded-full text-white text-sm flex items-center justify-center gap-2
+    ${saving ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-800'}
+  `}
             >
-              Save
+              {saving ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  Saving...
+                </>
+              ) : (
+                'Save'
+              )}
             </button>
           </div>
         </div>

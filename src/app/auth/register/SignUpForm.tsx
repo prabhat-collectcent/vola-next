@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { useToast } from '@/components/toast/ToastProvider';
 import Submit from '@/components/form/Submit';
 import { signupAction } from './actions';
+import { useEffect } from 'react';
 
 export default function SignUpForm() {
 
@@ -62,8 +63,6 @@ export default function SignUpForm() {
       });
     }
   };
-
-
 
   return (
     <div className="w-full flex justify-center items-center px-4 relative">

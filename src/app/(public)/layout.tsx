@@ -7,7 +7,7 @@ export default function HomeLayout({
 }>) {
   return (
     <div className="min-h-screen flex flex-col bg-[#FDFCFF]">
-      <Header />
+      {/* <Header /> */}
       <div className="flex items-center justify-center py-[40px] bg-[#FDFCFF]">
         {children}
       </div>

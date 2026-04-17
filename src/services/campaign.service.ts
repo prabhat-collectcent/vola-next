@@ -85,4 +85,8 @@ export const updateCampaignDemographyTargeting = async (id: number, data: update
 
 export const updateCampaignMiscellaneousTargeting = async (id: number, data: updateMiscellaneousPayload) => apiRequest(() => api.put(`/api/campaign/other/${id}`, data));
 
-export const uploadCreatives = async ( data: uploadCreativePayload) => apiRequest(() => api.put(`/api/campaign/creatives`, data));
+export const uploadCreatives = async ( data: uploadCreativePayload) => apiRequest(() => api.post(`/api/campaign/creatives`, data));
+
+export const getCampaignReport = async() => apiRequest(() => api.get(`/api/campaign/reports?appId=in.swiggy.android`));
+
+export const getTotalStats = async() => apiRequest(() => api.get(`/api/total-stats`));
