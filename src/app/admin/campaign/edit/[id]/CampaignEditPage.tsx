@@ -8,10 +8,12 @@ import StepTargeting from './steps/Targeting';
 import StepBudgetBid from './steps/BudgetBid';
 import { useCampaign } from './context/CampaignContext';
 import { getCampaignByIdAction } from '@/actions/campaign.actions';
+import { useToast } from '@/components/toast/ToastProvider';
 
 export default function CampaignEditPage({ queryParams }: { queryParams: { value: any } }) {
 
   const [loading, setLoading] = useState(true);
+  const { showToast} = useToast();
 
   const [activeStep, setActiveStep] = useState(1);
 
@@ -25,82 +27,95 @@ export default function CampaignEditPage({ queryParams }: { queryParams: { value
       try {
 
         const fetchedCampaign: any = await getCampaignByIdAction(parsedParams.id);
-        console.log("fetched campaign", fetchedCampaign);
 
-        dispatch({
-          type: "SET_FIELD",
-          payload: {
-            name: fetchedCampaign.data.name,
-            budget: fetchedCampaign.data.budget.amount_micros / 1000000,
-            bid_value: fetchedCampaign.data.ad_group.cpm_bid_micros / 1000000,
-            start_date: fetchedCampaign.data.start_date,
-            end_date: fetchedCampaign.data.end_date,
-            campaign_type: fetchedCampaign.data.campaign_type,
-            event: fetchedCampaign.data.event,
-            platform: fetchedCampaign.data.platform,
-            package_name: fetchedCampaign.data.package_name,
-            attribution_partner: fetchedCampaign.data.attribution_partner,
-            schedules: fetchedCampaign.data.criterias.filter((c: any) => c.type === 'AD_SCHEDULE'),
-            geo_exclude: fetchedCampaign.criteria_by_type.LOCATION?.length > 0 ? fetchedCampaign.criteria_by_type.LOCATION
-              .filter((loc: any) => loc.negative == true)
-              .map((loc: any) => {
-                return {
-                  id: loc.id,
-                  canonicalName: loc.mapped_value ?? loc.criterion_data.canonicalName,
-                  geoTargetConstant: loc.criterion_data.geo_target_constant,
-                }
-              }) : [],
-            geo_include: fetchedCampaign.criteria_by_type.LOCATION?.length > 0 ? fetchedCampaign.criteria_by_type.LOCATION
-              .filter((loc: any) => loc.negative == false)
-              .map((loc: any) => {
-                return {
-                  id: loc.id,
-                  canonicalName: loc.mapped_value ?? loc.criterion_data.canonicalName,
-                  geoTargetConstant: loc.criterion_data.geo_target_constant,
-                }
-              }) : [],
-            parental_statuses: (fetchedCampaign.criteria_by_type?.PARENTAL_STATUS ?? []).map((status: any) => ({
-              id: status.id,
-              status: status.criterion_data.type,
-            })),
+        if (fetchedCampaign.success == false) {
+        } else {
+          dispatch({
+            type: "SET_FIELD",
+            payload: {
+              name: fetchedCampaign.data.name,
+              budget: fetchedCampaign.data.budget.amount_micros / 1000000,
+              bid_value: fetchedCampaign.data.ad_group.cpm_bid_micros / 1000000,
+              start_date: fetchedCampaign.data.start_date,
+              end_date: fetchedCampaign.data.end_date,
+              campaign_type: fetchedCampaign.data.campaign_type,
+              events: fetchedCampaign.data.events,
+              platform: fetchedCampaign.data.platform?.split(','),
+              package_name: fetchedCampaign.data.package_name,
+              app_store_url: fetchedCampaign.data.advtrackinglink,
+              tracking_url: fetchedCampaign.data.tracking_url,
+              attribution_partner: fetchedCampaign.data.attribution_partner,
+              schedules: fetchedCampaign.data.criterias.filter((c: any) => c.type === 'AD_SCHEDULE'),
+              geo_exclude: fetchedCampaign.criteria_by_type.LOCATION?.length > 0 ? fetchedCampaign.criteria_by_type.LOCATION
+                .filter((loc: any) => loc.negative == true)
+                .map((loc: any) => {
+                  return {
+                    id: loc.id,
+                    canonicalName: loc.mapped_value ?? loc.criterion_data.canonicalName,
+                    geoTargetConstant: loc.criterion_data.geo_target_constant,
+                    source : loc.mapped_value ? 'api' : 'file'
+                  }
+                }) : [],
+              geo_include: fetchedCampaign.criteria_by_type.LOCATION?.length > 0 ? fetchedCampaign.criteria_by_type.LOCATION
+                .filter((loc: any) => loc.negative == false)
+                .map((loc: any) => {
+                  return {
+                    id: loc.id,
+                    canonicalName: loc.mapped_value ?? loc.criterion_data.canonicalName,
+                    geoTargetConstant: loc.criterion_data.geo_target_constant,
+                    source : loc.mapped_value ? 'api' : 'file'
+                  }
+                }) : [],
+              parental_statuses: (fetchedCampaign.criteria_by_type?.PARENTAL_STATUS ?? []).map((status: any) => ({
+                id: status.id,
+                status: status.criterion_data.type,
+              })),
 
-            genders: (fetchedCampaign.criteria_by_type?.GENDER ?? []).map((gender: any) => ({
-              id: gender.id,
-              gender: gender.criterion_data.type,
-            })),
+              genders: (fetchedCampaign.criteria_by_type?.GENDER ?? []).map((gender: any) => ({
+                id: gender.id,
+                gender: gender.criterion_data.type,
+              })),
 
-            age_ranges: (fetchedCampaign.criteria_by_type?.AGE_RANGE ?? []).map((ageRange: any) => ({
-              id: ageRange.id,
-              ageRange: ageRange.criterion_data.type,
-            })),
+              age_ranges: (fetchedCampaign.criteria_by_type?.AGE_RANGE ?? []).map((ageRange: any) => ({
+                id: ageRange.id,
+                ageRange: ageRange.criterion_data.type,
+              })),
 
-            income_ranges: (fetchedCampaign.criteria_by_type?.INCOME_RANGE ?? []).map((incomeRange: any) => ({
-              id: incomeRange.id,
-              incomeRange: incomeRange.criterion_data.type,
-            })),
+              income_ranges: (fetchedCampaign.criteria_by_type?.INCOME_RANGE ?? []).map((incomeRange: any) => ({
+                id: incomeRange.id,
+                incomeRange: incomeRange.criterion_data.type,
+              })),
 
-            devices: (fetchedCampaign.criteria_by_type?.DEVICE ?? []).map((device: any) => ({
-              id: device.id,
-              device: device.criterion_data.type,
-            })),
-            ip_exclusions: (fetchedCampaign.criteria_by_type?.IP_BLOCK ?? []).map((ipCriteria: any) => ({
-              id: ipCriteria.id,
-              ip: ipCriteria.criterion_data.ip_address,
-            })),
-            mobile_carriers: (fetchedCampaign.criteria_by_type?.CARRIER ?? []).map((carrier: any) => ({
-              id: carrier.id,
-              name: carrier.mapped_value,
-              resourceName: carrier.criterion_data.carrier_constant,
-              constantId: carrier.mapped_id,
-              countryCode: 'IN'
-            }))
+              devices: (fetchedCampaign.criteria_by_type?.DEVICE ?? []).map((device: any) => ({
+                id: device.id,
+                device: device.criterion_data.type,
+              })),
+              ip_exclusions: (fetchedCampaign.criteria_by_type?.IP_BLOCK ?? []).filter((c: any) => c.negative == true).map((ipCriteria: any) => ({
+                id: ipCriteria.id,
+                ip: ipCriteria.criterion_data.ip_address,
+              })),
+              ip_inclusions: (fetchedCampaign.criteria_by_type?.IP_BLOCK ?? []).filter((c: any) => c.negative == false).map((ipCriteria: any) => ({
+                id: ipCriteria.id,
+                ip: ipCriteria.criterion_data.ip_address,
+              })),
+              mobile_carriers: (fetchedCampaign.criteria_by_type?.CARRIER ?? []).map((carrier: any) => ({
+                id: carrier.id,
+                name: carrier.mapped_value,
+                resourceName: carrier.criterion_data.carrier_constant,
+                constantId: carrier.mapped_id,
+                countryCode: 'IN'
+              }))
+            }
+          })
+
+        }
 
 
-          }
-        })
+
 
       } catch (error) {
 
+        showToast((error as Error)?.message || 'Failed to fetch campaign details', 'error');
       } finally {
         setLoading(false);
       }
@@ -110,10 +125,6 @@ export default function CampaignEditPage({ queryParams }: { queryParams: { value
     fetchCampaign();
   }, []);
 
-
-
-  const [campaignUrl, setCampaignUrl] = useState('');
-  const [adType, setAdType] = useState<'display' | 'video' | 'ctv'>('');
 
   return (
     <div className="flex flex-col bg-[#F8F8FA] min-h-screen">

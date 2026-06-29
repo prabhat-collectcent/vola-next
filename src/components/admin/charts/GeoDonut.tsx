@@ -33,6 +33,7 @@ export default function GeoDonut({ title, data }: GeoDonutProps) {
                 innerRadius={37}
                 outerRadius={60}
                 paddingAngle={3}
+                cornerRadius={6}
                 stroke="none"
                 onMouseEnter={(_, index) => setActiveIndex(index)}
                 onMouseLeave={() => setActiveIndex(null)}

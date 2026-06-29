@@ -9,38 +9,91 @@ import BarChartSimple, {
 import LineStatsChart, {
   LineStatsItem,
 } from '@/components/admin/charts/LineStatsChart';
-import { getTotalStatsAction } from '@/actions/campaign.actions';
+import { getMonthlyStatsAction, getStatisticsOverviewAction, getTotalStatsAction } from '@/actions/campaign.actions';
 import { useToast } from '@/components/toast/ToastProvider';
+import Select from '@/components/form/fields/Select';
+import { start } from 'repl';
 
 export default function DashboardPage() {
 
   const [loading, setLoading] = useState(true);
-  const showToast = useToast();
+  const [monthlyStatsLoading, setMonthyStatsLoading] = useState(false);
+  const [statsOverviewLoading, setStatsOverviewLoading] = useState(false);
+  const { showToast } = useToast();
+
+  const today = new Date().toISOString().split('T')[0];
+  const [startDate, setStartDate] = useState(today);
+  const [endDate, setEndDate] = useState(today);
+  const [range, setRange] = useState('Custom');
 
   const [stats, setStats] = useState([
     { label: 'Impressions', value: '0', change: '+11.01%', trend: 'up' },
-    { label: 'Clicks', value: '0', change: '-0.03%', trend: 'down' },
+    { label: 'Clicks', value: '0', change: '+0.03%', trend: 'down' },
     { label: 'Conversions', value: '0', change: '+15.03%', trend: 'up' },
     { label: 'Spends', value: '0', change: '+6.08%', trend: 'up' },
     { label: 'CTR', value: '0', change: '+6.08%', trend: 'up' },
   ])
 
+  const COLORS = [
+    '#FDBA74',
+    '#4F7CD1',
+    '#6EE7B7',
+    '#A5B4FC',
+    '#FCA5A5',
+    '#C4B5FD',
+    '#67E8F9',
+  ];
+
+
+  const [geoData, setGeoData] = useState([
+    // { label: 'United States', value: 0, color: '#FDBA74' },
+    // { label: 'Canada', value: 0, color: '#4F7CD1' },
+    // { label: 'Mexico', value: 0, color: '#6EE7B7' },
+    // { label: 'Other', value: 0, color: '#A5B4FC' },
+  ])
+
+  const [inventoryData, setInvetoryData] = useState([
+    // { label: 'In app', value: 0, color: '#FDBA74' },
+    // { label: 'Direct app', value: 0, color: '#4F7CD1' },
+    // { label: 'OEM', value: 0, color: '#6EE7B7' },
+  ])
+
+  const [barData, setBarData] = useState([
+    // { label: 'Linux', value: 1000 },
+    // { label: 'Mac', value: 0 },
+    // { label: 'iOS', value: 0 },
+    // { label: 'Windows', value: 0 },
+    // { label: 'Android', value: 0 },
+    // { label: 'Other', value: 0 },
+  ]);
+
+  const [monthlyTrafficStats, setMonthlyTrafficStats] = useState<LineStatsItem[]>([]);
+  const [monthlyConverionStats, setMonthlyConversionStats] = useState<LineStatsItem[]>([]);
+
   useEffect(() => {
     async function fetchStats() {
       setLoading(true);
       try {
-        const result: any = await getTotalStatsAction();
+        const result: any = await getTotalStatsAction({ start_date: startDate, end_date: endDate });
+        console.log("total stats", result);
         if (result.success) {
           const updatedStats = stats.map((item) => {
             const key = item.label.toLowerCase();
-            let value = result.data[key] !== undefined ? result.data[key] : item.value;
+            let value = result.data[key] !== undefined ? result.data[key]['value'] : item.value;
+            console.log(`key: ${key}, value: ${value}`);
+            if (key == 'spends') value = result.data['total_spend']['value'];
             if (key === 'ctr') value = Number(value).toFixed(2);
             return {
               ...item,
               value: value,
+              change: result.data[key] !== undefined ? result.data[key]['change'] : (key === 'spends' ? result.data['total_spend']['change'] : item.change),
+              trend: result.data[key] !== undefined ? result.data[key]['change_type'] : (key === 'spends' ? result.data['total_spend']['change_type'] : item.trend),
             };
           });
           setStats(updatedStats);
+        } else {
+
+          showToast(result.message || 'Failed to fetch stats', 'error');
         }
       } catch (error) {
         showToast('Failed to fetch stats', 'error');
@@ -52,39 +105,132 @@ export default function DashboardPage() {
 
     fetchStats();
 
+  }, [startDate, endDate]);
+
+  useEffect(() => {
+    async function fetchMonthlyStats() {
+      setMonthyStatsLoading(true);
+      try {
+        const result: any = await getMonthlyStatsAction();
+        console.log("monthly stats", result.data);
+        if (result.success) {
+
+          const updatedMonthlyStats = result.data.map((item: any) => {
+            return {
+              label: item.month,
+              value1: item.total_impressions,
+              value2: item.total_clicks
+            };
+          });
+          setMonthlyTrafficStats(updatedMonthlyStats);
+
+          const updateMonthlyConvStats = result.data.map((item: any) => {
+            return {
+              label: item.month,
+              value1: item.total_spends,
+              value2: item.total_conversions
+            }
+          })
+
+          setMonthlyConversionStats(updateMonthlyConvStats);
+        } else {
+          showToast(result.message || 'Failed to fetch monthly stats', 'error');
+        }
+      } catch (error) {
+        showToast('Failed to fetch monthly stats', 'error');
+
+      } finally {
+        setMonthyStatsLoading(false);
+      }
+    }
+
+    fetchMonthlyStats();
+
   }, [])
-  const GEO_DATA: DonutItem[] = [
-    { label: 'United States', value: 52.1, color: '#FDBA74' },
-    { label: 'Canada', value: 22.8, color: '#4F7CD1' },
-    { label: 'Mexico', value: 13.9, color: '#6EE7B7' },
-    { label: 'Other', value: 11.2, color: '#A5B4FC' },
-  ];
-
-  const INVENTORY_DATA: DonutItem[] = [
-    { label: 'In app', value: 52.1, color: '#FDBA74' },
-    { label: 'Direct app', value: 22.8, color: '#4F7CD1' },
-    { label: 'OEM', value: 13.9, color: '#6EE7B7' },
-  ];
 
 
-  const BAR_DATA: BarItem[] = [
-    { label: 'Linux', value: 17000 },
-    { label: 'Mac', value: 30000 },
-    { label: 'iOS', value: 22000 },
-    { label: 'Windows', value: 32000 },
-    { label: 'Android', value: 13000 },
-    { label: 'Other', value: 26000 },
-  ];
+  useEffect(() => {
+    async function fetchStatsOverview() {
+      setStatsOverviewLoading(true);
+      try {
+        const result: any = await getStatisticsOverviewAction({ start_date: startDate, end_date: endDate });
+        console.log("stats overview", result.data);
+        if (result.success) {
 
-  const TRAFFIC_DATA: LineStatsItem[] = [
-    { label: 'Jan', value1: 12000, value2: 5000 },
-    { label: 'Feb', value1: 8000, value2: 13000 },
-    { label: 'Mar', value1: 14000, value2: 20000 },
-    { label: 'Apr', value1: 25000, value2: 7000 },
-    { label: 'May', value1: 28000, value2: 15000 },
-    { label: 'Jun', value1: 22000, value2: 25000 },
-    { label: 'Jul', value1: 24000, value2: 31000 },
-  ];
+          setBarData(result.data.os_wise_statistics.map((os: any, index: number) => {
+            return {
+              label: os.os_type,
+              value: os.clicks,
+              color: COLORS[index % COLORS.length],
+
+            }
+          }))
+
+          setGeoData(result.data.geo_wise_statistics.map((geo: any) => {
+            return {
+              label: geo.country_code,
+              value: geo.percentage,
+            }
+
+          }))
+
+          setInvetoryData(result.data.inventory_wise_statistics.map((inventory: any, index: number) => {
+            return {
+              label: inventory.inventory_type,
+              value: inventory.percentage,
+              color: COLORS[index % COLORS.length],
+
+            }
+          }))
+        } else {
+          showToast(result.message || 'Failed to fetch stats overview', 'error');
+        }
+      } catch (error) {
+        setStatsOverviewLoading(false);
+        showToast('Failed to fetch monthly stats', 'error');
+
+      } finally {
+        setStatsOverviewLoading(false);
+      }
+    }
+
+    fetchStatsOverview();
+
+  }, [startDate, endDate]);
+
+  const handleRangeChange = (value: string) => {
+    setRange(value);
+
+    const today = new Date();
+
+    const formatDate = (date: Date) => {
+      return date.toISOString().split('T')[0];
+    };
+
+    if (value === 'Today') {
+      const current = formatDate(today);
+
+      setStartDate(current);
+      setEndDate(current);
+    }
+
+    if (value === 'Last 7 Days') {
+      const start = new Date();
+      start.setDate(today.getDate() - 6);
+
+      setStartDate(formatDate(start));
+      setEndDate(formatDate(today));
+    }
+
+    if (value === 'Last 30 Days') {
+      const start = new Date();
+      start.setDate(today.getDate() - 29);
+
+      setStartDate(formatDate(start));
+      setEndDate(formatDate(today));
+    }
+  };
+
 
   return (
     <div className="w-full bg-stone-50">
@@ -93,7 +239,12 @@ export default function DashboardPage() {
         <span className="text-xs text-black font-normal">Dashboard</span>
 
         <div className="flex items-center gap-2 border border-neutral-200 rounded-lg px-2 py-1 h-7">
-          <select className="text-xs bg-transparent outline-none">
+
+          <select
+            value={range}
+            onChange={(e) => handleRangeChange(e.target.value)}
+            className="text-xs bg-transparent outline-none"
+          >
             <option>Custom</option>
             <option>Today</option>
             <option>Last 7 Days</option>
@@ -104,13 +255,22 @@ export default function DashboardPage() {
 
           <input
             type="date"
-            defaultValue="2026-01-01"
+            value={startDate}
+            onChange={(e) => {
+              setStartDate(e.target.value);
+            }}
+            // defaultValue={startDate}
             className="text-xs outline-none bg-transparent"
           />
+
           <span className="text-xs">-</span>
           <input
             type="date"
-            defaultValue="2026-01-28"
+            value={endDate}
+            onChange={(e) => {
+              setEndDate(e.target.value);
+            }}
+            // defaultValue={endDate}
             className="text-xs outline-none bg-transparent"
           />
         </div>
@@ -118,11 +278,17 @@ export default function DashboardPage() {
 
       {/* ================= Stats Cards ================= */}
       <div className="p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {stats.map((item) => {
-          // const isUp = item.trend === 'up';
-
-
-          return (
+        {loading
+          ? Array.from({ length: 5 }).map((_, index) => (
+            <div
+              key={index}
+              className="p-6 bg-white rounded-md animate-pulse flex flex-col gap-2"
+            >
+              <div className="h-4 w-24 bg-gray-200 rounded" />
+              <div className="h-6 w-20 bg-gray-300 rounded" />
+            </div>
+          ))
+          : stats.map((item) => (
             <div
               key={item.label}
               className="p-6 bg-white rounded-md flex flex-col gap-2"
@@ -133,56 +299,107 @@ export default function DashboardPage() {
 
               <div className="flex justify-between items-center">
                 <span className="text-2xl font-medium text-black">
-
-                  {
-                    item.value
-                  }
+                  {item.value || 0}
                 </span>
 
-                {/* <span className={`flex items-center gap-1 text-xs font-normal`}>
+                <span
+                  className={`flex items-center gap-1 text-xs font-normal ${(2) >= 1 ? 'text-green-500' : 'text-red-500'
+                    }`}
+                >
                   {item.change}
-                  {isUp ? (
+                  {2 >= 1 ? (
                     <TrendingUpIcon sx={{ fontSize: 14 }} />
                   ) : (
                     <TrendingDownIcon sx={{ fontSize: 14 }} />
                   )}
-                </span> */}
+                </span>
+
+
               </div>
             </div>
-          );
-        })}
+          ))}
       </div>
 
-      {/* ================= Charts Section ================= */}
       <div className="px-3 grid grid-cols-1 lg:grid-cols-3 gap-3">
-        {/* Geo Wise */}
-        <GeoDonut title="Geo Wise Statistics" data={GEO_DATA} />
 
-        <BarChartSimple title="OS Wise Statistics" data={BAR_DATA} />
+        {statsOverviewLoading
+          ? Array.from({ length: 3 }).map((_, index) => (
+            <div
+              key={index}
+              className="bg-white rounded-md p-4 animate-pulse flex flex-col gap-4"
+            >
+              {/* Title */}
+              <div className="h-4 w-40 bg-gray-200 rounded" />
 
-        {/* Inventory wise */}
-        <GeoDonut title="Inventory Wise Statistics" data={INVENTORY_DATA} />
+              {/* Chart */}
+              <div className="h-[300px] w-full bg-gray-100 rounded" />
+
+              {/* Legend rows */}
+              <div className="space-y-2">
+                <div className="h-3 bg-gray-100 rounded w-full" />
+                <div className="h-3 bg-gray-100 rounded w-5/6" />
+                <div className="h-3 bg-gray-100 rounded w-4/6" />
+              </div>
+            </div>
+          ))
+          : (
+            <>
+              <GeoDonut
+                title="Geo Wise Statistics"
+                data={geoData}
+              />
+
+              <BarChartSimple
+                title="OS Wise Statistics"
+                data={barData}
+              />
+
+              <GeoDonut
+                title="Inventory Wise Statistics"
+                data={inventoryData}
+              />
+            </>
+          )}
       </div>
+
+
 
       {/* ================= Line Stats Section ================= */}
       <div className="px-3 mt-3 grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <LineStatsChart
-          title="Traffic statistics"
-          legends={{
-            label1: 'Total Clicks',
-            label2: 'Total Impressions',
-          }}
-          data={TRAFFIC_DATA}
-        />
+        {monthlyStatsLoading
+          ? Array.from({ length: 2 }).map((_, index) => (
+            <div
+              key={index}
+              className="bg-white rounded-md p-4 animate-pulse flex flex-col gap-4"
+            >
+              {/* Title skeleton */}
+              <div className="h-4 w-40 bg-gray-200 rounded" />
 
-        <LineStatsChart
-          title="Conversion statistics"
-          legends={{
-            label1: 'Total Spends',
-            label2: 'Total Conversions',
-          }}
-          data={TRAFFIC_DATA}
-        />
+              {/* Chart area skeleton */}
+              <div className="h-64 w-full bg-gray-100 rounded" />
+            </div>
+          ))
+          : (
+            <>
+              <LineStatsChart
+                title="Traffic statistics"
+                legends={{
+                  label1: 'Total Impressions',
+                  label2: 'Total Clicks',
+                }}
+                data={monthlyTrafficStats}
+              />
+
+              <LineStatsChart
+                title="Conversion statistics"
+                legends={{
+                  label1: 'Total Spends',
+                  label2: 'Total Conversions',
+                }}
+                data={monthlyConverionStats}
+              />
+            </>
+          )}
       </div>
     </div>
   );

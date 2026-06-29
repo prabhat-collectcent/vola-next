@@ -1,11 +1,11 @@
 import { Suspense } from 'react';
-import CampaignCreatePage from './CreateAd';
+import CreateAdPage from './CreateAd';
 
 export default function CreateCampaign() {
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <CampaignCreatePage />
+      <CreateAdPage />
     </Suspense>
 
   )

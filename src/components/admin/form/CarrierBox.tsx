@@ -4,8 +4,11 @@ import { useEffect, useState } from "react";
 import { useCampaign } from "@/app/admin/campaign/create/context/CampaignContext";
 import { getMobileCarrersAction } from "@/actions/metadata.actions";
 import { Carrier } from "@/app/admin/campaign/create/context/types";
+import { useToast } from "@/components/toast/ToastProvider";
 
 export default function CarrierBox() {
+    const { showToast } = useToast();
+
     const { state, dispatch } = useCampaign();
     const [carriers, setCarriers] = useState<Carrier[]>([])
     const selectedCarriers = state.mobile_carriers || [];
@@ -17,19 +20,26 @@ export default function CarrierBox() {
     useEffect(() => {
         async function fetchCarriers() {
             const fetchedCarriers: any = await getMobileCarrersAction();
-            // @ts-ignore
-            const mappedCarriers = fetchedCarriers.data.map((carrier) => ({
-                id: carrier.google_id,
-                name: carrier.name,
-                countryCode: carrier.country_code,
-                resourceName: carrier.google_resource_name,
-            }));
-            if (state.countries && state.countries.length > 0) {
-                setCarriers(mappedCarriers.filter((carrier: any) => {
-                    return state.countries && state.countries.find((c: any) => c.countryCode === carrier.countryCode)
+            if (fetchedCarriers.success) {
+                // @ts-ignore
+                const mappedCarriers = fetchedCarriers.data.map((carrier) => ({
+                    id: carrier.google_id,
+                    name: carrier.name,
+                    countryCode: carrier.country_code,
+                    resourceName: carrier.google_resource_name,
                 }));
+
+                if (state.countries && state.countries.length > 0) {
+                    setCarriers(mappedCarriers.filter((carrier: any) => {
+                        return state.countries && state.countries.find((c: any) => c.countryCode === carrier.countryCode)
+                    }));
+                } else {
+                    setCarriers(mappedCarriers);
+                }
+
             } else {
-                setCarriers(mappedCarriers);
+            showToast(fetchedReports.message || 'Failed to fetch carrier data', 'error');
+
             }
         }
         fetchCarriers();

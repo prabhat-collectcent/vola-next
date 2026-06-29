@@ -2,6 +2,7 @@ import { updateGeoCampaignTargetingAction } from "@/actions/campaign.actions";
 import { getCountryListAction } from "@/actions/metadata.actions";
 import { useCampaign } from "@/app/admin/campaign/edit/[id]/context/CampaignContext";
 import CarrierBox from "@/components/admin/form/edit_campaign/CarrierBox";
+import CountrySearchBox from "@/components/admin/form/edit_campaign/CountrySearchBox";
 import IpExclusionBox from "@/components/admin/form/edit_campaign/IPExclusionBox";
 import LocationSearchBox from "@/components/admin/form/edit_campaign/LocationSearchBox";
 import Select from '@/components/admin/form/fields/Select';
@@ -17,34 +18,29 @@ export default function Geotargeting() {
     const { id } = useParams();
 
     const [saving, setSaving] = useState(false);
-      const [countryList, setCountryList] = useState<{ label: string; value: string }[]>([]);
-    
+    const [countryList, setCountryList] = useState<{ label: string; value: string }[]>([]);
 
-     useEffect(() => {
-    
+
+    useEffect(() => {
+
         async function fetchCountryList() {
-          try {
-            const result: any = await getCountryListAction();
-            if (result.success) {
-              const countries = Object.keys(result.data).map((key) => {
-                return { label: result.data[key], value: key };
-              });
-              setCountryList(countries);
+            try {
+                const result: any = await getCountryListAction();
+                if (result.success) {
+                    const countries = Object.keys(result.data).map((key) => {
+                        return { label: result.data[key], value: key };
+                    });
+                    setCountryList(countries);
+                } else {
+                    showToast(result.message || 'Failed to fetch country list', 'error');
+                }
+            } catch (error) {
+                showToast('Failed to fetch country list', 'error');
             }
-    
-          } catch (error) {
-            showToast('Failed to fetch country list', 'error');
-          }
-    
+
         }
         fetchCountryList();
-      }, [])
-
-
-    function handleCountryChange(value: string) {
-        dispatch({ type: 'SET_FIELD', payload: { country: value } });
-    }
-
+    }, [])
 
     async function handleGeoTargetingSave() {
 
@@ -52,23 +48,25 @@ export default function Geotargeting() {
         try {
 
             let payload: updateCampaignGeoTargetingPayload = {
-                geo_include: state.geo_include.map(loc => loc.geoTargetConstant),
-                geo_exclude: state.geo_exclude.map(loc => loc.geoTargetConstant),
+                geo_include: state.added_geo_include.map(loc => { return { source: loc.source, canonicalName: loc.canonicalName, geoId: loc.geoTargetConstant }; }),
+                geo_exclude: state.added_geo_exclude.map(loc => { return { source: loc.source, canonicalName: loc.canonicalName, geoId: loc.geoTargetConstant }; }),
                 deleted_geo: state.deleted_geo
             };
 
-            // console.log("update campaign schedule payload", payload);
+            console.log("update campaign location payload", payload);   
             const apiResponse: any = await updateGeoCampaignTargetingAction(id as unknown as number, payload);
 
-            console.log("update location targeting api res", apiResponse)
+            console.log("update location targeting api res", apiResponse)   
 
-            if ((apiResponse as any)?.success) {
+            if ((apiResponse as any)?.success) {    
                 showToast('Campaign location targeting updated successfully', 'success');
             } else {
                 showToast(apiResponse?.message || 'Something went wrong', 'error');
             }
 
         } catch (error) {
+                        console.log("update location targeting api res", error)   
+
             showToast((error as Error)?.message || 'Something went wrong', 'error');
         } finally {
             setSaving(false);
@@ -79,20 +77,9 @@ export default function Geotargeting() {
     return (
         <div className="flex flex-col">
 
-            <div className='mb-8'>
-                <Select
-                    label="Select Country"
-                    name="country"
-                    value={state.country}
-                    onChange={handleCountryChange}
-                    placeholder="Select Country"
-                    options={countryList}
-                />
-
-            </div>
-
-            <LocationSearchBox title="Include locations" type="include" countryCode={state.country ?? ''} />
-            <LocationSearchBox title="Exclude locations" type="exclude" countryCode={state.country ?? ''} />
+            <CountrySearchBox />
+            <LocationSearchBox title="Include locations" type="include" countryCodes={state.countries?.map(o => o.countryCode) ?? []} />
+            <LocationSearchBox title="Exclude locations" type="exclude" countryCodes={state.countries?.map(o => o.countryCode) ?? []} />
 
             <div className="flex justify-end">
 

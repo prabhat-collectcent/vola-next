@@ -6,41 +6,54 @@ export const initialCampaignState: CampaignState = {
     bid_value: 0,
     start_date: "",
     end_date: "",
-    campaign_type:'',
+    campaign_type: '',
 
+    events: [],
+    added_events: [],
+    deleted_events: [],
+    app_store_url: "",
+    tracking_url: "",
+    
     geo_include: [],
+    added_geo_include: [],
+
+    added_geo_exclude: [],
     geo_exclude: [],
+    
     deleted_geo: [],
     proximities: [],
 
     parental_statuses: [],
-    addedParentalStatuses:[],
+    addedParentalStatuses: [],
     removedParentalStatus: [],
 
     genders: [],
-    addedGenders:[],
+    addedGenders: [],
     removedGenders: [],
 
     age_ranges: [],
-    addedAgeRanges:[],
+    addedAgeRanges: [],
     removedAgeRanges: [],
 
     income_ranges: [],
-    addedIncomeRanges:[],
+    addedIncomeRanges: [],
     removedIncomeRanges: [],
 
     devices: [],
-    addedDevices:[],
-    removedDevices:[],
+    addedDevices: [],
+    removedDevices: [],
 
     ip_exclusions: [],
-    addedIpExclusions:[],
-    removedIpExclusions:[],
-    
+    addedIpExclusions: [],
+    removedIpExclusions: [],
+
+    ip_inclusions: [],
+    addedIpInclusions: [],
+    removedIpInclusions: [],
 
     mobile_carriers: [],
-    addedCarriers:[],
-    removedCarriers:[],
+    addedCarriers: [],
+    removedCarriers: [],
 
     schedules: []
 }

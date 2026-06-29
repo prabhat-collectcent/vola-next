@@ -13,6 +13,7 @@ import Devices from '@/components/admin/form/edit_campaign/Devices';
 import Geotargeting from '@/components/campaign/components/edit/Geotargeting';
 import Demography from '@/components/campaign/components/edit/Demography';
 import Miscelleneous from '@/components/campaign/components/edit/Miscellaneous';
+import CustomAudience from '@/components/admin/form/edit_campaign/CustomAudience';
 
 interface Props {
   loading?: boolean;
@@ -33,7 +34,7 @@ export default function Targeting({
   const [errors, setErrors] = useState<Record<string, string>>({})
   const { state, dispatch } = useCampaign()
 
-  const [activeTab, setActiveTab] = useState<'geo' | 'demography' | 'miscellaneous'>(
+  const [activeTab, setActiveTab] = useState<'geo' | 'demography' | 'miscellaneous' | 'custom_audience'>(
     'geo'
   );
 
@@ -103,6 +104,7 @@ export default function Targeting({
             { key: 'geo', label: 'Geo Targeting' },
             { key: 'demography', label: 'Demography exclusions' },
             { key: 'miscellaneous', label: 'Miscellaneous' },
+            { key : 'custom_audience', label:'Custom Audience'}
           ].map((tab) => (
             <button
               key={tab.key}
@@ -132,6 +134,11 @@ export default function Targeting({
         {/* AD TYPE TAB */}
         {activeTab === 'miscellaneous' && (
           <Miscelleneous />
+        )}
+
+        {/* AD TYPE TAB */}
+        {activeTab === 'custom_audience' && (
+          <CustomAudience />
         )}
 
       </div>

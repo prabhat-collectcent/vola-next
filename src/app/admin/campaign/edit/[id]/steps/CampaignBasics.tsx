@@ -10,6 +10,8 @@ import { updateCampaignBasicAction } from '@/actions/campaign.actions';
 import { useParams } from 'next/navigation';
 import { useToast } from '@/components/toast/ToastProvider';
 import { eventOptions } from '../../../create/steps/CampaignBasics';
+import EventBox from '@/components/admin/form/edit_campaign/EventBox';
+import Checkbox from '@/components/admin/form/fields/Checkbox';
 
 interface Props {
   loading?: boolean;
@@ -42,7 +44,7 @@ export default function CampaignBasics({
   const [campaignUrl, setCampaignUrl] = useState('');
   const [packageUrl, setPackageUrl] = useState('');
   const [platform, setPlatform] = useState('');
-  const [adType, setAdType] = useState<'display' | 'video' | 'ctv'>('');
+  const [adType, setAdType] = useState<'display' | 'video' | 'ctv' | ''>('');
   const [attribution, setAttribution] = useState<string>('');
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -60,11 +62,12 @@ export default function CampaignBasics({
     let value: any;
 
     if ("target" in e) {
-      // Native input
       name = e.target.name;
-      value = (e.target.type === 'number' && e.target.value) ? parseFloat(e.target.value) : e.target.value;
+
+      value = e.target.type === "number" && e.target.value
+          ? parseFloat(e.target.value)
+          : e.target.value;
     } else {
-      // Custom component (Select etc.)
       name = e.name;
       value = e.value;
     }
@@ -75,12 +78,18 @@ export default function CampaignBasics({
         [name]: value,
       },
     });
-  }
+  };
 
   async function handleSave() {
 
-    const result = CampaignBasicSchema.safeParse({ name: state.name, budget: state.budget, bid_value: state.bid_value });
-    console.log("validation result", result)
+    const result = CampaignBasicSchema.safeParse({
+      name: state.name,
+      budget: state.budget,
+      bid_value: state.bid_value,
+      added_events: state.added_events,
+      removed_events: state.deleted_events
+    });
+
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
 
@@ -98,11 +107,22 @@ export default function CampaignBasics({
 
 
     try {
-      const apiResponse: any = await updateCampaignBasicAction(id as unknown as number, {
+
+      const payload = {
         name: state.name,
         budget: state.budget,
         cpm_bid_value: state.bid_value,
-      })
+        added_events: state.added_events,
+        deleted_events: state.deleted_events,
+        platform: state.platform?.join(','),
+        package_name: state.package_name,
+        advtrackinglink: state.app_store_url,
+        tracking_url: state.tracking_url
+      };
+
+      console.log("basic update payload: ", payload);
+
+      const apiResponse: any = await updateCampaignBasicAction(id as unknown as number, payload);
 
       console.log("update api res", apiResponse)
 
@@ -123,6 +143,31 @@ export default function CampaignBasics({
 
     onNext();
   }
+
+  function toggleField(e: React.ChangeEvent<HTMLInputElement>) {
+  
+      const value = e.target.name;
+  
+      const found = state['platform']?.find((platform: string) => platform === value);
+  
+      let addedUpdateState = state['platform'];
+  
+  
+      if (found) {
+        if (state.platform) addedUpdateState = state['platform'].filter((p: string) => p != value);
+      } else {
+        if (state.platform) addedUpdateState = [...state['platform'], value]
+      }
+  
+      console.log("added updated state", addedUpdateState);
+      dispatch({
+        type: "SET_FIELD",
+        payload: {
+          platform: addedUpdateState
+        }
+      });
+    }
+
 
 
   if (loading) {
@@ -369,7 +414,7 @@ export default function CampaignBasics({
                   className="mb-[24px]"
                 />
 
-                <Select
+                {/* <Select
                   label="Platform*"
                   name="platform"
                   value={state.platform}
@@ -382,28 +427,70 @@ export default function CampaignBasics({
                     { label: 'iOS', value: 'ios' },
                     { label: 'Web', value: 'web' },
                   ]}
-                />
+                /> */}
+
+                <div className="flex flex-col gap-1 mb-3">
+                
+                                  <div className="text-[13px] mb-2 text-[#1E1E1E] font-small">
+                                    Select Platforms
+                                  </div>
+                
+                
+                                  <Checkbox
+                                    label="Android"
+                                    name="android"
+                                    checked={Boolean(state.platform?.find(platform => platform == "android"))}
+                                    onChange={(e) => toggleField(e)}
+                                  />
+                
+                                  <Checkbox
+                                    label="iOS"
+                                    name="ios"
+                                    checked={Boolean(state.platform?.find(platform => platform == "ios"))}
+                                    onChange={(e) => toggleField(e)}
+                                  />
+                
+                                  <Checkbox
+                                    label="Web"
+                                    name="web"
+                                    checked={Boolean(state.platform?.find(platform => platform == "web"))}
+                                    onChange={(e) => toggleField(e)}
+                                  />
+                                </div>
+                
+
 
                 <Text
-                  label="App Package Name / App Store URL*"
+                  label="App Package Name"
                   name="package_name"
                   value={state.package_name}
                   onChange={handleChange}
-                  placeholder="Enter package name/app store URL"
+                  placeholder="Enter package name"
                   className="mb-[24px]"
                 />
 
-                <Select
-                  label="Event*"
-                  name="event"
-                  value={state.event}
-                  onChange={(value) =>
-                    handleChange({ name: "event", value })
-                  } placeholder="Select Event"
+                <Text
+                  label="App Store URL*"
+                  name="app_store_url"
+                  value={state.app_store_url}
+                  onChange={handleChange}
+                  placeholder="Enter app store URL"
                   className="mb-[24px]"
-                  options={eventOptions}
+                  error={errors.app_store_url}
                 />
 
+
+                <Text
+                  label="Tracking URL"
+                  name="tracking_url"
+                  value={state.tracking_url}
+                  onChange={handleChange}
+                  placeholder="Enter tracking URL"
+                  className="mb-[24px]"
+                />
+
+
+                <EventBox />
 
                 <Text
                   type='number'
@@ -455,11 +542,17 @@ export default function CampaignBasics({
                       { key: 'branch', src: '/branch.svg' },
                       { key: 'singular', src: '/singular.svg' },
                       { key: 'adjust', src: '/adjust.svg' },
+                      { key: 'kochava', src: '/kochava.svg' },
+                      { key: 'tenjin', src: '/tenjin.svg' },
+                      { key: 'airbridge', src: '/airbridge.svg' },
+                      { key: 'trackier', src: '/trackier.svg' },
+                      { key: 'appmetrica', src: '/appmetrica.svg' },
+
                     ].map((item) => (
                       <div
                         key={item.key}
                         onClick={() => setAttribution(item.key)}
-                        className={`w-28 rounded-xl flex items-center justify-center cursor-pointer ${item.key === 'appsflyer'
+                        className={`w-28 rounded-xl flex items-center justify-center cursor-pointer ${item.key === state.attribution_partner
                           ? 'outline outline-1 outline-[#4144E6]'
                           : 'outline outline-1 outline-zinc-100'
                           }`}

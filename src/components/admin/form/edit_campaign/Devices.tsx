@@ -23,9 +23,9 @@ export default function Devices() {
         } else {
             updatedDevices = [...state.devices, { device: device }];
             addedUpdateState = [...state['addedDevices'], device];
-
         }
-        dispatch({ type: 'SET_FIELD', payload: { devices: updatedDevices, 'removedDevices': removeUpdateState } });
+
+        dispatch({ type: 'SET_FIELD', payload: { devices: updatedDevices, 'removedDevices': removeUpdateState, addedDevices: addedUpdateState } });
     }
 
     return (

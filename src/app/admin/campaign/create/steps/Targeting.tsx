@@ -11,9 +11,11 @@ import IpExclusionBox from '@/components/admin/form/IPExclusionBox';
 import CarrierBox from '@/components/admin/form/CarrierBox';
 import Devices from '@/components/admin/form/Devices';
 import Demography from '@/components/admin/form/Demography';
+import CustomAudience from '@/components/admin/form/CustomAudience';
 import { getCountryListAction } from '@/actions/metadata.actions';
 import { useToast } from '@/components/toast/ToastProvider';
 import CountrySearchBox from '@/components/admin/form/CountrySearchBox';
+import IpInclusionBox from '@/components/admin/form/IPInclusionBox';
 
 interface Props {
   onNext: () => void;
@@ -35,9 +37,7 @@ export default function Targeting({
   const { state, dispatch } = useCampaign();
   const [countryList, setCountryList] = useState<{ label: string; value: string }[]>([]);
 
-  const [activeTab, setActiveTab] = useState<'geo' | 'device' | 'adtype'>(
-    'geo'
-  );
+  const [activeTab, setActiveTab] = useState<'geo' | 'device' | 'adtype' | 'custom_audience'>('geo');
 
   useEffect(() => {
 
@@ -49,6 +49,8 @@ export default function Targeting({
             return { label: result.data[key], value: key };
           });
           setCountryList(countries);
+        } else {
+          showToast(result.message || 'Failed to fetch country list', 'error');
         }
 
       } catch (error) {
@@ -122,11 +124,12 @@ export default function Targeting({
             { key: 'geo', label: 'Geo Targeting' },
             { key: 'device', label: 'Device Targeting' },
             { key: 'adtype', label: 'Demography' },
+            { key: 'custom_audience', label: 'Custom Audience' }
           ].map((tab) => (
             <button
               key={tab.key}
               onClick={() =>
-                setActiveTab(tab.key as 'geo' | 'device' | 'adtype')
+                setActiveTab(tab.key as 'geo' | 'device' | 'adtype' | 'custom_audience')
               }
               className={`pb-3 text-sm ${activeTab === tab.key
                 ? 'text-[#4144E6] border-b-2 border-[#4144E6]'
@@ -159,6 +162,7 @@ export default function Targeting({
             <LocationSearchBox title="Exclude locations" type="exclude" countryCodes={state.countries?.map(o => o.countryCode) ?? []} />
             <CarrierBox />
             <IpExclusionBox />
+            <IpInclusionBox />
 
 
           </div>
@@ -173,6 +177,14 @@ export default function Targeting({
         {activeTab === 'adtype' && (
           <Demography />
         )}
+
+        {/* AD TYPE TAB */}
+        {activeTab === 'custom_audience' && (
+          <CustomAudience />
+        )}
+
+
+
 
         {/* Next */}
         <div className="flex justify-end">

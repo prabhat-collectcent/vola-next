@@ -213,3 +213,10 @@ button:focus {
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
 }
+
+.country-select-wrapper .relative > div:nth-child(2) {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+

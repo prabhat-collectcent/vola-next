@@ -4,37 +4,98 @@ import { useEffect, useState } from "react";
 import { useCampaign } from "@/app/admin/campaign/edit/[id]/context/CampaignContext";
 import { getMobileCarrersAction } from "@/actions/metadata.actions";
 import { Carrier } from "@/app/admin/campaign/create/context/types";
+import { useToast } from "@/components/toast/ToastProvider";
 
 export default function CarrierBox() {
     const { state, dispatch } = useCampaign();
     const [carriers, setCarriers] = useState<Carrier[]>([])
     const selectedCarriers = state.mobile_carriers || [];
+    //this state is for tracking wheather a carrier that is being added was removed earlier, if so we'll not send that
+    //  in addedCarriers array due to duplicate carrier creation 
+    const [removedCarriersTracking, setRemovedCarriersTracking] = useState<Carrier[]>([]);
+
+    const { showToast } = useToast();
 
     const [open, setOpen] = useState(false);
-    const [tempSelected, setTempSelected] = useState<Carrier[]>(selectedCarriers);
+    const [tempSelected, setTempSelected] = useState<any[]>(selectedCarriers.map((c: any) => {
+        return {
+            id: c.constantId?.toString(),
+            name: c.name,
+            countryCode: c.country_code,
+            resourceName: c.resourceName,
+            db_id: c.id,
+        }
+
+    }));
     console.log("Carrier Box component rendered", state);
 
     useEffect(() => {
         async function fetchCarriers() {
             const fetchedCarriers = await getMobileCarrersAction();
-            // @ts-ignore
-            setCarriers(fetchedCarriers.data.map((carrier) => ({
-                id: carrier.google_id,
-                name: carrier.name,
-                countryCode: carrier.country_code,
-                resourceName: carrier.google_resource_name,
-            })));
+            if (fetchedCarriers.success) {
+                console.log("fetched carriers", fetchedCarriers);
+                // @ts-ignore
+                setCarriers(fetchedCarriers.data.map((carrier) => ({
+                    id: carrier.google_id,
+                    name: carrier.name,
+                    countryCode: carrier.country_code,
+                    resourceName: carrier.google_resource_name,
+                })));
+            } else {
+                showToast(fetchedCarriers.message || 'Failed to fetch carrier data', 'error');
+            }
         }
         fetchCarriers();
     }, []);
 
     function toggleCarrier(carrier: Carrier) {
+        console.log("toggle carrier", carrier, tempSelected);
 
-        const foundCarrier = tempSelected.find((c) => c.id === carrier.id);
+        const foundCarrier = tempSelected.find((c) => c.id == carrier.id);
+        console.log("found carrier", foundCarrier);
+
         if (foundCarrier) {
-            setTempSelected(tempSelected.filter((c) => c.id !== carrier.id));
+            console.log("removing carrier: ", carrier, removedCarriersTracking, state.addedCarriers, state.removedCarriers);
+            setTempSelected(tempSelected.filter((c) => c.id != carrier.id));
+            setRemovedCarriersTracking([...removedCarriersTracking, carrier]);
+
+            let updatedRemoveState = [...state.removedCarriers, carrier.db_id]
+            dispatch({
+                type: "SET_FIELD",
+                payload: {
+                    // @ts-ignore
+                    removedCarriers: updatedRemoveState
+                },
+            });
         } else {
+
             setTempSelected([...tempSelected, carrier]);
+            console.log("adding carrier: ", carrier, removedCarriersTracking, state.addedCarriers, state.removedCarriers);
+            const foundInRemoved = removedCarriersTracking.find(c => c.resourceName == carrier.resourceName && carrier.db_id);
+            console.log("found in removed", foundInRemoved);
+            if (foundInRemoved) {
+
+                setRemovedCarriersTracking(removedCarriersTracking.filter(c => c.id !== carrier.id));
+
+                let updatedRemoveState = state.removedCarriers.filter(id => carrier.db_id != id);
+                dispatch({
+                    type: "SET_FIELD",
+                    payload: {
+                        // @ts-ignore
+                        removedCarriers: updatedRemoveState
+                    },
+                });
+
+            } else {
+                dispatch({
+                    type: "SET_FIELD",
+                    payload: {
+                        addedCarriers: [...state.addedCarriers, carrier.resourceName],
+                    },
+                });
+            }
+
+
         }
     }
 
@@ -51,7 +112,7 @@ export default function CarrierBox() {
 
     function removeCarrier(carrier: Carrier) {
 
-        let updatedRemoveState = [ ...state.removedCarriers, carrier.id]
+        let updatedRemoveState = [...state.removedCarriers, carrier.id]
         dispatch({
             type: "SET_FIELD",
             payload: {
@@ -123,9 +184,21 @@ export default function CarrierBox() {
                                     <input
                                         type="checkbox"
                                         // @ts-ignore
-                                        checked={  Boolean(tempSelected.find(c => c.constantId == carrier.id))}
-                                        onChange={() => toggleCarrier(carrier)
+                                        checked={Boolean(tempSelected.find(c => c.id == carrier.id))}
+                                        onChange={() => {
+                                            const existing = tempSelected.find(c => c.id == carrier.id);
+                                            if (existing) {
+                                                toggleCarrier({ ...carrier, db_id: existing.db_id })
+                                            } else {
+                                                const existingInOriginlCarrier = selectedCarriers.find(c => c.constantId.toString() == carrier.id);
+                                                if (existingInOriginlCarrier) {
+                                                    toggleCarrier({ ...carrier, db_id: Number(existingInOriginlCarrier.id) })
 
+                                                } else {
+                                                    toggleCarrier(carrier)
+                                                }
+                                            }
+                                        }
                                         }
                                     />
 

@@ -9,9 +9,11 @@ interface DateProps {
   value?: string;
   onChange?: (value: string) => void;
   error?: string;
+  placeholder?: string;
 }
 
-export default function DateField({ name, value, onChange, error }: DateProps) {
+export default function DateField({ name, value, onChange, placeholder, error }: DateProps) {
+  console.log("inside date component", value)
   const parsedDate = value ? new Date(value) : null;
 
   return (
@@ -21,7 +23,7 @@ export default function DateField({ name, value, onChange, error }: DateProps) {
         onChange={(date: Date | null) =>
           onChange && onChange(date ? date.toISOString().split('T')[0] : '')
         }
-        placeholderText="Select date"
+        placeholderText={placeholder ?? "Select date"}
         dateFormat="MM/dd/yyyy"
         className={`
           w-full h-[37px] text-[12px]

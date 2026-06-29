@@ -3,17 +3,18 @@ import { CampaignState } from "./types"
 export const initialCampaignState: CampaignState = {
     name: "",
     budget: 0,
-    bid_value: 0,
+    bid_value: '',
     start_date: "",
     end_date: "",
     status: 'PAUSED',
     campaign_type: 'DISPLAY',
+    campaign_goal: 'new_users',
 
-
-    event: '',
-    platform: '',
+    events: [],
+    platform: [],
     package_name: '',
     attribution_partner: '',
+    url: '',
 
     geo_include: [],
     geo_exclude: [],
@@ -25,11 +26,13 @@ export const initialCampaignState: CampaignState = {
     income_ranges: [],
 
     devices: [],
+    operating_systems: [],
     ip_exclusions: [],
+    ip_inclusions: [],
 
     mobile_carriers: [],
-
     schedules: [],
 
-    countries: []
+    countries: [],
+    custom_audiences: []
 }

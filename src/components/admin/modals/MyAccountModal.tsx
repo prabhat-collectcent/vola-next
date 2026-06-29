@@ -6,6 +6,7 @@ import Text from '@/components/admin/form/fields/Text';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import { getProfileAction, updatePasswordAction, updateProfileAction } from '@/actions/profile.actions';
 import { set } from 'zod';
+import { useToast } from '@/components/toast/ToastProvider';
 
 interface Props {
   onClose: () => void;
@@ -16,6 +17,7 @@ export default function MyAccountModal({ onClose }: Props) {
   const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile');
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const { showToast } = useToast();
 
   const [user, setUser] = useState<any>(null);
 
@@ -27,14 +29,19 @@ export default function MyAccountModal({ onClose }: Props) {
   useEffect(() => {
     async function fetchUserProfile() {
       const result = await getProfileAction();
-      const userData = (result as any).data.user;
+      if (result.success) {
+        const userData = (result as any).data.user;
 
-      setUser(userData);
+        setUser(userData);
 
-      // populate fields
-      setFirstName(userData.firstname || '');
-      setLastName(userData.lastname || '');
-      setEmail(userData.email || '');
+        // populate fields
+        setFirstName(userData.firstname || '');
+        setLastName(userData.lastname || '');
+        setEmail(userData.email || '');
+      } else {
+        showToast(result.message || 'Failed to fetch user profile', 'error');
+      }
+
     }
     fetchUserProfile();
   }, []);
@@ -155,7 +162,7 @@ export default function MyAccountModal({ onClose }: Props) {
       }
     } catch (error) {
       // @ts-ignore
-      setErrors({ general: error.message || "Something went wrong"});
+      setErrors({ general: error.message || "Something went wrong" });
       // @ts-ignore
       console.error('Update password failed:', error);
     }

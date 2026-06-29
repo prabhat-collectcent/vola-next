@@ -1,6 +1,6 @@
 'use server';
 
-import { getCountryList, getMobileCarriers, searchLocationPayload, searchLocations } from "@/services/metadata.service";
+import { getCountryList, getMobileCarriers, getOSVersionList, searchLocationPayload, searchLocations } from "@/services/metadata.service";
 
 export async function searchLocationAction(query: string, data: searchLocationPayload) {
   const result = await searchLocations(query, data);
@@ -14,5 +14,10 @@ export async function getMobileCarrersAction() {
 
 export async function getCountryListAction() {
   const result = await getCountryList();
+  return result;
+}
+
+export async function getOSVersionListAction() {
+  const result  = await getOSVersionList();
   return result;
 }

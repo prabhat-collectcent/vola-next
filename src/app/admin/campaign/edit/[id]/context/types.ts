@@ -65,6 +65,7 @@ export interface Carrier {
   name: string;
   countryCode: string;
   resourceName: string;
+  constantId: number;
 }
 
 export interface CampaignState {
@@ -75,14 +76,22 @@ export interface CampaignState {
   end_date: string
   campaign_type: string
 
-  event?: string,
-  platform?: string,
+  events: any[],
+  added_events: string[],
+  deleted_events: number[]
+
+  platform?: string[],
   package_name?: string,
   attribution_partner?: string,
+  app_store_url?: string;
+  tracking_url?: string;
 
+  geo_include: any[];
+  added_geo_include: any[];
 
-  geo_include: any[]
   geo_exclude: any[]
+  added_geo_exclude: any[];
+
   deleted_geo: number[]
 
   proximities: Proximity[]
@@ -113,13 +122,17 @@ export interface CampaignState {
   addedIpExclusions: string[],
   removedIpExclusions: number[],
 
+  ip_inclusions: any[],
+  addedIpInclusions: string[],
+  removedIpInclusions: number[],
+
   mobile_carriers: Carrier[],
   addedCarriers: string[],
   removedCarriers: number[]
 
   schedules: ScheduleCampaignCriterion[],
 
-  country?: string;
+  countries?: { countryCode: string, name: string }[];
 }
 
 export type CampaignAction =

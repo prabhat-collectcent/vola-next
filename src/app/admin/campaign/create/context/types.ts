@@ -23,21 +23,25 @@ export interface Carrier {
     name: string;
     countryCode: string;
     resourceName: string;
+    db_id ?: number;
 }
 
 export interface CampaignState {
     name: string
     budget: number
-    bid_value: number
+    bid_value: number | string;
     start_date: string
     end_date: string,
     status: 'ENABLED' | 'PAUSED',
     campaign_type: 'DISPLAY' | 'PERFORMANCE_MAX'
+    campaign_goal?: 'new_users' | 'existing_users'
 
-    event?: string,
-    platform?: string,
+    events?: string[],
+    platform?: string[],
     package_name?: string,
+    app_store_url?: string,
     attribution_partner?: string,
+    url?: string,
 
     geo_include: any[]
     geo_exclude: any[]
@@ -52,7 +56,10 @@ export interface CampaignState {
     income_ranges: string[]
 
     devices: string[]
+    operating_systems: string[]
     ip_exclusions: string[]
+    ip_inclusions: string[]
+    custom_audiences: string[]
 
     schedules: Schedule[]
 

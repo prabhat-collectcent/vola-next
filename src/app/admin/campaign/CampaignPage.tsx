@@ -13,6 +13,8 @@ import AddIcon from '@mui/icons-material/Add';
 import { useRouter } from 'next/navigation';
 import { getCampaignAction } from '@/actions/campaign.actions';
 import { getCampaignsParams } from '@/services/campaign.service';
+import { getCountryListAction } from '@/actions/metadata.actions';
+
 
 interface CampaignItem {
   id: number;
@@ -43,7 +45,7 @@ export default function CampaignPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [pageCount, setPageCount] = useState(0);
 
-  const [sortKey, setSortKey] = useState<string>('name');
+  const [sortKey, setSortKey] = useState<string>('created_at');
   const [order, setOrder] = useState<'asc' | 'desc' | ''>('asc');
 
   const [status, setStatus] = useState<'PAUSED' | 'ENABLED' | ''>('');
@@ -63,7 +65,7 @@ export default function CampaignPage() {
     'clicks',
     'ctr',
     'conversions',
-    // 'cr',
+    'cr',
     // 'ecpa',
     'type',
     'bidding_strategy',
@@ -75,6 +77,7 @@ export default function CampaignPage() {
   const [tempColumns, setTempColumns] = useState<string[]>(visibleColumns);
 
   const [data, setData] = useState<CampaignItem[]>([]);
+  const [countries, setCountries] = useState<any[]>([]);
 
   function useDebounce<T>(value: T, delay: number) {
     const [debouncedValue, setDebouncedValue] = useState(value);
@@ -99,32 +102,33 @@ export default function CampaignPage() {
       setLoading(true);
       try {
         console.log('currentPage', currentPage);
-        let queryParams: getCampaignsParams = { per_page: PAGE_SIZE, page_number: currentPage + 1 };
+        let queryParams: getCampaignsParams = { per_page: PAGE_SIZE, page_number: currentPage + 1, sort_by: sortKey ||  'created_at', sort_order : order };
         if (status) queryParams.status = status;
         if (startDate) queryParams.start_date = startDate;
         if (endDate) queryParams.end_date = endDate;
         if (campaignType) queryParams.campaign_type = campaignType;
         if (debouncedSearch) queryParams.search = debouncedSearch;
+        if (country) queryParams.country = country;
 
         const fetchedCampaigns = await getCampaignAction(queryParams);
         console.log('fetchedCampaigns', fetchedCampaigns)
         // @ts-ignore
         setData(fetchedCampaigns.data.map((current) => ({
-          id: current.id,
+          id: current.campaign_type === 'DISPLAY' ? current.id : current.campaign_id,
           name: current.name,
-          spend: current.metrics?.cost_micros / 1e6 || 0,
-          impressions: current.metrics?.impressions || 0,
-          clicks: current.metrics?.clicks || 0,
-          ctr: current.metrics?.ctr ? `${(current.metrics.ctr * 100).toFixed(2)}%` : '-',
-          conversions: current.metrics?.conversions || 0,
-          cr: current.metrics?.cr ? `${(current.metrics.cr * 100).toFixed(2)}%` : '-',
-          ecpa: current.metrics?.ecpa ? `$${(current.metrics.ecpa / 1e6).toFixed(2)}` : '-',
-          status: current.status,
+          spend: current.campaign_type === 'DISPLAY' ? (current.cost_micros / 1e6) : (current.conversions * current.cpa).toFixed(3),
+          impressions: current.campaign_type === 'DISPLAY' ? (current.impressions || 0) : 'NA',
+          clicks: current.clicks || 0,
+          ctr: current.campaign_type === 'DISPLAY' ? (current.ctr ? `${(current.ctr * 100).toFixed(2)}%` : '-') : 'NA',
+          conversions: current.conversions || 0,
+          cr: current.campaign_type === 'DISPLAY' ? (current.cr ? `${(current.cr * 100).toFixed(2)}%` : 'NA') : (Number(current.clicks) > 0 ? `${((Number(current.conversions) / Number(current.clicks)) * 100).toFixed(2)}%` : '0.00%'),
+          ecpa: current.ecpa ? `$${(current.ecpa / 1e6).toFixed(2)}` : '-',
+          status: !Number.isNaN(Number(current.status)) ? (Number(current.status) === 1 ? 'ENABLED' : 'PAUSED') : current.status,
           checked: false,
           bidding_strategy: current.bidding_strategy_type,
           type: current.campaign_type.toLowerCase(),
-          avg_cpc: current.metrics?.average_cpc ? current.metrics.average_cpc / 1e6 : 0,
-          bid_value: current.ad_group?.cpm_bid_micros ? current.ad_group?.cpm_bid_micros / 1e6 : 0,
+          avg_cpc: current.campaign_type === 'DISPLAY' ? (current.average_cpc ? current.average_cpc / 1e6 : 0) : (current.average_cpc == 0 ? 0 : current.average_cpc),
+          bid_value: current.campaign_type === 'DISPLAY' ? (current.cpm_bid_micros ? current.cpm_bid_micros / 1e6 : 0) : current.network_cpa,
         })));
 
         // @ts-ignore
@@ -136,7 +140,31 @@ export default function CampaignPage() {
 
     }
     fetchCampaigns();
-  }, [currentPage, startDate, campaignType, debouncedSearch, endDate, status]);
+  }, [currentPage, startDate, campaignType, debouncedSearch, endDate, status, sortKey, order]);
+
+
+  useEffect(() => {
+    async function fetchCountries() {
+
+      setLoading(true);
+      try {
+
+        const fetchedCountries = await getCountryListAction();
+        console.log('fetchedCountries', fetchedCountries);
+        // @ts-ignore
+        setCountries(Object.entries(fetchedCountries.data).map(([countryCode, CountryName]) => {
+          return {
+            CountryName,
+            countryCode
+          }
+        }));
+      } catch (error) {
+
+      }
+
+    }
+    fetchCountries();
+  }, []);
 
 
 
@@ -164,9 +192,10 @@ export default function CampaignPage() {
   const allColumns = [
     { key: 'name', label: 'Campaign Name', sortable: true, custom: true },
     { key: 'spend', label: 'Spend', sortable: true },
-    { key: 'impressions', label: 'Impressions', sortable: true },
+    { key: 'impressions', label: 'Impressions' },
     { key: 'clicks', label: 'Clicks', sortable: true },
     { key: 'ctr', label: 'CTR' },
+    { key: 'cr', label: 'CR' },
     { key: 'conversions', label: 'Conversions' },
     { key: 'type', label: 'Type' },
     // { key: 'bidding_strategy', label: 'Bidding Strategy' },
@@ -225,59 +254,8 @@ export default function CampaignPage() {
       {/* Filters */}
       <div className="p-4">
         <div className="bg-white rounded-xl p-4 flex flex-col gap-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Select
-              label="Status"
-              name="status"
-              value={status}
-              placeholder="No Status"
-              // @ts-ignore
-              onChange={setStatus}
-              options={[
-                { label: 'Enabled', value: 'ENABLED' },
-                { label: 'Paused', value: 'PAUSED' },
-              ]}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
-            <Select
-              label="OS"
-              name="os"
-              value={os}
-              placeholder="No OS"
-              onChange={setOs}
-              options={[
-                { label: 'iOS', value: 'iOS' },
-                { label: 'Android', value: 'Android' },
-              ]}
-            />
-
-            <Select
-              label="Country"
-              name="country"
-              value={country}
-              placeholder="No Country"
-              onChange={setCountry}
-              options={[
-                { label: 'United States', value: 'US' },
-                { label: 'India', value: 'IN' },
-              ]}
-            />
-
-            <Select
-              label="Campaign Type"
-              name="campaignType"
-              value={campaignType}
-              placeholder="No Type"
-              // @ts-ignore
-              onChange={setCampaignType}
-              options={[
-                { label: 'Performance', value: 'PERFORMANCE' },
-                { label: 'Branding', value: 'DISPLAY' },
-              ]}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="w-full h-[37px] border border-[#00000026] rounded-[13px] px-[16px] py-[8px] flex items-center">
               <SearchIcon sx={{ fontSize: 16 }} />
               <input
@@ -288,13 +266,74 @@ export default function CampaignPage() {
               />
             </div>
 
+            <Select
+              label="Status"
+              name="status"
+              value={status}
+              placeholder="Status"
+              // @ts-ignore
+              onChange={setStatus}
+              options={[
+                { label: 'Enabled', value: 'ENABLED' },
+                { label: 'Paused', value: 'PAUSED' },
+              ]}
+            />
+
+            {/* <Select
+              label="OS"
+              name="os"
+              value={os}
+              placeholder="No OS"
+              onChange={setOs}
+              options={[
+                { label: 'iOS', value: 'iOS' },
+                { label: 'Android', value: 'Android' },
+              ]}
+            /> */}
+
+            {/* <div className="country-select-wrapper">
+              <Select
+                label="Country"
+                name="country"
+                value={country}
+                placeholder="No Country"
+                onChange={setCountry}
+                options={countries.map(country => {
+                  return {
+                    label: country.CountryName,
+                    value: country.countryCode
+                  }
+                })}
+              />
+            </div> */}
+
+            <Select
+              label="Campaign Type"
+              name="campaignType"
+              value={campaignType}
+              placeholder="Campaign Type"
+              // @ts-ignore
+              onChange={setCampaignType}
+              options={[
+                { label: 'Performance', value: 'PERFORMANCE' },
+                { label: 'Branding', value: 'DISPLAY' },
+              ]}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <DateField
               name="startDate"
               value={startDate}
+              placeholder='Start Date'
               onChange={setStartDate}
             />
 
-            <DateField name="endDate" value={endDate} onChange={setEndDate} />
+            <DateField
+              name="endDate"
+              value={endDate}
+              placeholder='End Date'
+              onChange={setEndDate} />
           </div>
         </div>
 
@@ -328,6 +367,9 @@ export default function CampaignPage() {
                 order={order}
                 onSortChange={handleSortChange}
                 onRowClick={(row) => { router.push(`/admin/campaign/edit/${row.id}`); }}
+                onEdit={(row) => {
+                  router.push(`/admin/campaign/edit/${row.id}`)
+                }}
               />
             </div>
           </div>

@@ -216,7 +216,7 @@ export default function LocationSearchBox({ title, type, countryCodes }: Props) 
 
                 <div className="flex items-center gap-1 mb-2 mt-4">
                     <label className="text-[13px] text-[#1E1E1E]">
-                        Upload file
+                        Chose file
                     </label>
 
                     <button
@@ -231,8 +231,8 @@ export default function LocationSearchBox({ title, type, countryCodes }: Props) 
 
                 <div className="mt-4">
                     <Text
-                        // label="Upload file"
-                        name="upload file"
+                        // label="Chose file"
+                        name="Chose file"
                         type="file"
                         accept=".csv"
                         onChange={handleCSVUpload}

@@ -79,9 +79,7 @@ export default function Select({
             ${className}
           `}
         >
-          {value
-            ? options.find((opt) => opt.value === value)?.label
-            : placeholder}
+          {value  ? options.find((opt) => opt.value === value)?.label : placeholder}
         </div>
 
         {/* Dropdown */}

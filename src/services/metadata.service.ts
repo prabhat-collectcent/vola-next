@@ -9,3 +9,5 @@ export const searchLocations = async (query: string, data : searchLocationPayloa
 export const getMobileCarriers = async () => apiRequest(() => api.get(`/api/metadata/carriers`));
 
 export const getCountryList = async () => apiRequest(() => api.get(`/api/metadata/country-codes`));
+
+export const getOSVersionList = async () => apiRequest(() => api.get(`/api/metadata/operating-systems`));

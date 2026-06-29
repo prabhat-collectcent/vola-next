@@ -66,6 +66,8 @@ export default function CountrySearchBox() {
                 if (result.success) {
                     const mappedCountries = Object.entries(result.data).map(([countryCode, name]) => ({ countryCode, name: name as string }))
                     setCountryList(mappedCountries);
+                } else {
+                    showToast(result.message || 'Failed to fetch country list', 'error');
                 }
 
             } catch (error) {

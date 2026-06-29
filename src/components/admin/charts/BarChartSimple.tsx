@@ -69,7 +69,7 @@ export default function BarChartSimple({ title, data }: BarChartSimpleProps) {
               {data.map((_, index) => (
                 <Cell
                   key={index}
-                  fill={activeIndex === index ? '#000000' : '#E5E5E5'}
+                  fill={activeIndex === index ? '#4144E6' : '#E5E5E5'}
                 />
               ))}
 

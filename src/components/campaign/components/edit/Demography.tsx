@@ -62,7 +62,7 @@ export default function Demography() {
 
         if (found) {
             if (found.id) {
-                console.log('removedDemographyType', removedDemographyType)
+                console.log('removedDemographyType', removedDemographyType);
                 removeUpdateState = [...state[removedDemographyType], found.id];
             }
             updated = state[field].filter((v: any) => v[demographyType] !== value);

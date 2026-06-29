@@ -9,38 +9,70 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import MyAccountModal from '@/components/admin/modals/MyAccountModal';
 import { signOut } from 'next-auth/react';
 import { getProfileAction } from '@/actions/profile.actions';
+import { getTotalStatsAction } from '@/actions/campaign.actions';
+import { useToast } from '../toast/ToastProvider';
 
 export default function Header({
   onToggleSidebar,
 }: {
   onToggleSidebar: () => void;
 }) {
+  const { showToast } = useToast();
   const [darkMode, setDarkMode] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [showBalance, setShowBalance] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
 
   const defaultAvtar = '/person.png'
 
   const [user, setUser] = useState<any>(null);
+  const [balance, setBalance] = useState(null);
+
+  const [isBalLoading, setIsBalLoading] = useState(true);
 
   useEffect(() => {
     async function fetchUserProfile() {
       const result = await getProfileAction();
-      const userData = (result as any).data.user;
+      if (result.success) {
+        const userData = (result as any).data.user;
+        setUser(userData);
+      } else {
+        showToast(result.message || 'Failed to fetch user profile', 'error');
+      }
 
-      setUser(userData);
-
-      // // populate fields
-      // setFirstName(userData.firstname || '');
-      // setLastName(userData.lastname || '');
-      // setEmail(userData.email || '');
     }
     fetchUserProfile();
   }, []);
+
+  useEffect(() => {
+
+    async function fetchUserBalance() {
+
+      try {
+        setIsBalLoading(true);
+        const result = await getTotalStatsAction({});
+        if (result.success) {
+          const userBalance = (result as any).balance.available_balance;
+          setBalance(userBalance);
+
+        } else {
+          showToast(result.message || 'Failed to fetch user balance', 'error');
+        }
+
+      } catch (error) {
+        showToast("failed to fetch user balance", "error");
+      } finally {
+        setIsBalLoading(false);
+      }
+
+    }
+    fetchUserBalance();
+  }, []);
+
+
+
 
 
 
@@ -83,7 +115,15 @@ export default function Header({
             sx={{ fontSize: 16, color: '#1C1B1F' }}
           />
           <span className="text-sm font-light text-neutral-600">Balance:</span>
-          <span className="text-sm font-normal text-indigo-800">${user?.balance ?? '0.00'}</span>
+          <div className="flex items-center gap-1">
+            {isBalLoading ? (
+              <div className="w-3.5 h-3.5 border-2 border-indigo-200 border-t-indigo-800 rounded-full animate-spin" />
+            ) : (
+              <span className="text-sm font-normal text-indigo-800">
+                ${balance ?? '0.00'}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -109,7 +149,7 @@ export default function Header({
         </div>
 
         {/* Search */}
-        <div className="hidden lg:flex w-56 h-7 px-2 py-1 rounded-lg outline outline-1 outline-neutral-200 focus-within:outline-[#4144E6] justify-between items-center">
+        {/* <div className="hidden lg:flex w-56 h-7 px-2 py-1 rounded-lg outline outline-1 outline-neutral-200 focus-within:outline-[#4144E6] justify-between items-center">
           <div className="flex items-center gap-1.5">
             <Search size={14} className="text-black/30" />
             <input
@@ -118,7 +158,7 @@ export default function Header({
               className="text-xs text-black/60 bg-transparent outline-none w-full"
             />
           </div>
-        </div>
+        </div> */}
 
         {/* Notifications */}
         <div className="relative">
@@ -207,7 +247,13 @@ export default function Header({
                 {/* Mobile Balance */}
                 <div className="md:hidden px-2 py-1 bg-sky-50 rounded text-xs">
                   <span className="text-neutral-600">Balance:</span>{' '}
-                  <span className="text-indigo-800 font-medium">${user?.balance ?? '0.00'}6</span>
+                  {isBalLoading ? (
+                    <div className="w-3 h-3 border-2 border-indigo-200 border-t-indigo-800 rounded-full animate-spin inline-block" />
+                  ) : (
+                    <span className="text-indigo-800 font-medium">
+                      ${balance ?? '0.00'}
+                    </span>
+                  )}
                 </div>
 
                 <div className="h-px bg-gray-200" />

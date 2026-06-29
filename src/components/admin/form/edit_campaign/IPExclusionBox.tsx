@@ -11,6 +11,7 @@ export default function IpExclusionBox() {
     const { state, dispatch } = useCampaign();
 
     const selectedIps = state.ip_exclusions || [];
+    console.log("IP Exclusion->", selectedIps);
 
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -20,20 +21,49 @@ export default function IpExclusionBox() {
     function addIp(e: React.KeyboardEvent<HTMLInputElement>) {
 
         if (e.key !== "Enter") return;
-        if (!ip.trim()) return;
-        if (selectedIps.includes(ip)) return;
-        if (!ipRegex.test(ip)) {
-            setError("Please enter a valid IP address");
+
+        const raw = ip.trim();
+        if (!raw) return;
+
+        const ips = raw.split(",").map(i => i.trim()).filter(Boolean);
+
+        const validIps: string[] = [];
+        const invalidIps: string[] = [];
+        const duplicateIps: string[] = [];
+
+        ips.forEach((singleIp) => {
+            if (!ipRegex.test(singleIp)) {
+                invalidIps.push(singleIp);
+            } else if (selectedIps.find(current => current.ip == singleIp) || validIps.includes(singleIp)) {
+                duplicateIps.push(singleIp);
+            } else {
+                validIps.push(singleIp);
+            }
+        });
+
+        if (invalidIps.length > 0) {
+            setError(`Invalid IP(s): ${invalidIps.join(", ")}`);
+            return;
+        }
+
+        if (duplicateIps.length > 0) {
+            setError(`Duplicate IP(s): ${duplicateIps.join(", ")}`);
+            return;
+        }
+
+        if (validIps.length > 500) {
+            setError('Maximum 500 IPs can be added at once');
             return;
         };
-        setError("");
 
-        let updatedAddedIps = [...state.addedIpExclusions, ip];
+        setError('');
+
+        let updatedAddedIps = [...state.addedIpExclusions, ...validIps];
 
         dispatch({
             type: "SET_FIELD",
             payload: {
-                ip_exclusions: [...selectedIps, { ip: ip }], addedIpExclusions: updatedAddedIps,
+                ip_exclusions: [...selectedIps, ...validIps.map(ip => ({ ip: ip }))], addedIpExclusions: updatedAddedIps,
             },
         });
 
@@ -48,7 +78,7 @@ export default function IpExclusionBox() {
             type: "SET_FIELD",
             payload: {
                 removedIpExclusions: updateRemovedIps,
-                ip_exclusions: selectedIps.filter( (ip)=> ipCriteria.ip != ip.ip)
+                ip_exclusions: selectedIps.filter((ip) => ipCriteria.ip != ip.ip)
             },
         });
     }
@@ -65,16 +95,43 @@ export default function IpExclusionBox() {
                     value={ip}
                     onChange={handleChange}
                     onKeyDown={addIp}
-                    error={error}
-                    placeholder="Enter ip address and press enter to add"
+                    // error={error}
+                    warning='Maximum 500 IPs can be added at once'
+                    placeholder="Enter IPs (comma separated) and press Enter"
                 />
             </div>
+
+            <div className="flex items-center gap-1 mt-4">
+                <label className="text-[13px] text-[#1E1E1E]">
+                    Upload CSV
+                </label>
+
+                <button
+                    type="button"
+                    // onClick={downloadSampleCSV}
+                    className="text-xs text-blue-600 hover:underline"
+                >
+                    (Download sample)
+                </button>
+            </div>
+
+            <div className="mt-2">
+                <Text
+                    name="upload_ip_csv"
+                    type="file"
+                    accept=".csv"
+                    // onChange={handleCSVUpload}
+                    className="mt-2 block w-full text-sm text-gray-500"
+                    error={error}
+                />
+            </div>
+
 
             {/* Selected Chips */}
             <div className="flex flex-wrap gap-2 mt-3">
                 {selectedIps.map((ipCriteria) => (
                     <div
-                        key={ipCriteria.id}
+                        key={ipCriteria.ip}
                         className="flex items-center bg-gray-100 rounded-full px-3 py-1 text-sm"
                     >
                         {ipCriteria.ip}
@@ -83,6 +140,7 @@ export default function IpExclusionBox() {
                             type="button"
                             onClick={() => removeIp(ipCriteria)}
                             className="ml-2 text-gray-500 hover:text-red-500"
+
                         >
                             ×
                         </button>

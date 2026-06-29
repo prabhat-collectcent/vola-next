@@ -27,7 +27,7 @@ export default function TransactionsPage() {
     Array.from({ length: 12 }).map((_, i) => ({
       id: i + 1,
       transactionId: `5e00b36c-3ee7-${100 + i}`,
-      date: 'Aug 10, 2022 15:22 PM',
+      date: 'Dec 10, 2025 15:22 PM',
       type: i % 2 === 0 ? 'Wire Transfer' : 'PayPal',
       amount: 38.64,
       status: 'Completed',

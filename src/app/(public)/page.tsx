@@ -87,11 +87,11 @@ tailwind.config = {
 <!-- Desktop Navigation -->
 <nav class="hidden md:flex items-center gap-10 text-gray-600 text-[15px]">
 
-<a href="solution.html" class="hover:text-black transition font-[inter]">Solutions</a>
-<a href="inventory.html" class="hover:text-black transition font-[inter]">Inventory</a>
-<a href="who-we-serve.html" class="hover:text-black transition font-[inter]">Who We Serve</a>
-<a href="about.html" class="hover:text-black transition font-[inter]">About</a>
-<a href="contact-us.html" class="hover:text-black transition font-[inter]">Contact</a>
+<a href="/solution" class="hover:text-black transition font-[inter]">Solutions</a>
+<a href="/inventory" class="hover:text-black transition font-[inter]">Inventory</a>
+<a href="/who-we-serve" class="hover:text-black transition font-[inter]">Who We Serve</a>
+<a href="/about" class="hover:text-black transition font-[inter]">About</a>
+<a href="/contact" class="hover:text-black transition font-[inter]">Contact</a>
 
 </nav>
 
@@ -125,19 +125,20 @@ d="M4 6h16M4 12h16M4 18h16"/>
 
 <div class="flex flex-col px-6 py-4 gap-4 text-gray-700">
 
-<a href="solution.html">Solutions</a>
-<a href="inventory.html">Inventory</a>
-<a href="who-we-serve.html">Who We Serve</a>
-<a href="about.html">About</a>
-<a href="contact-us.html">Contact</a>
+
+<a href="/solution">Solutions</a>
+<a href="/inventory">Inventory</a>
+<a href="/who-we-serve">Who We Serve</a>
+<a href="/about">About</a>
+<a href="/contact">Contact</a>
 
 <div class="flex gap-3 pt-4">
 
-<a href="sign-in.html" class="flex-1 text-center px-4 py-2 border border-black rounded-full text-sm">
+<a href="/auth/login" class="flex-1 text-center px-4 py-2 border border-black rounded-full text-sm">
 Sign in
 </a>
 
-<a href="sign-up.html" class="flex-1 text-center px-4 py-2 rounded-full text-white bg-[#995AF1] text-sm">
+<a href="/auth/register" class="flex-1 text-center px-4 py-2 rounded-full text-white bg-[#995AF1] text-sm">
 Sign up
 </a>
 
@@ -166,7 +167,7 @@ Acquire real customers, increase brand visibility, and drive measurable growth a
 
 <!-- CTA Button -->
   <!-- Animated Border -->
-  <a href="sign-up.html">
+  <a href="/auth/register">
   <div class="flex items-center justify-center mt-6">
   <div class="relative p-[2px] rounded-full overflow-hidden">
 
@@ -180,8 +181,7 @@ Acquire real customers, increase brand visibility, and drive measurable growth a
     <div class="relative flex items-center justify-between flex-col gap-2 bg-white px-12 md:px-4 py-2 rounded-full md:flex-row">
 
       <span class="text-gray-800 text-sm font-medium font-poppins">
-        Start a Campaign
-      </span>
+Connect with the campaign manager      </span>
 
       <!-- Button -->
       <img src="assets/images/cta-icon.png" alt="cta" class="ml-2">
@@ -1195,12 +1195,12 @@ hover:before:opacity-[0.05]">
       <div>
         <h3 class="text-lg font-medium mb-4">Company</h3>
         <ul class="space-y-3 text-gray-500">
-          <li><a href="about.html" class="hover:text-black transition">About Vola.ad
+          <li><a href="/about" class="hover:text-black transition">About Vola.ad
 </a></li>
-          <li><a href="contact-us.html" class="hover:text-black transition">Contact Us</a></li>
-          <li><a href="solution.html" class="hover:text-black transition">Solutions</a></li>
-          <li><a href="inventory.html" class="hover:text-black transition">Inventory</a></li>
-          <li><a href="who-we-serve.html" class="hover:text-black transition">Who We Serve</a></li>
+          <li><a href="/contact" class="hover:text-black transition">Contact Us</a></li>
+          <li><a href="/solution" class="hover:text-black transition">Solutions</a></li>
+          <li><a href="/inventory" class="hover:text-black transition">Inventory</a></li>
+          <li><a href="/who-we-serve" class="hover:text-black transition">Who We Serve</a></li>
         </ul>
       </div>
 
@@ -1208,10 +1208,10 @@ hover:before:opacity-[0.05]">
       <div>
         <h3 class="text-lg font-medium mb-4">Legal</h3>
         <ul class="space-y-3 text-gray-500">
-          <li><a href="privacy-policy.html" class="hover:text-black transition">Privacy Policy</a></li>
-          <li><a href="terms.html" class="hover:text-black transition">Terms Of Services</a></li>
-          <li><a href="cookie-policy.html" class="hover:text-black transition">Cookie Policy</a></li>
-          <li><a href="data-processing-agreement.html" class="hover:text-black transition">Data Processing Agreement</a></li>
+          <li><a href="/privacy-policy" class="hover:text-black transition">Privacy Policy</a></li>
+          <li><a href="/terms" class="hover:text-black transition">Terms Of Services</a></li>
+          <li><a href="/cookie-policy" class="hover:text-black transition">Cookie Policy</a></li>
+          <li><a href="/data-processing-agreement" class="hover:text-black transition">Data Processing Agreement</a></li>
         </ul>
       </div>
 

@@ -37,7 +37,7 @@ export default function BudgetBid({ isActive, isDisabled, onToggle }: Props) {
   }
 
   async function submitCampaign() {
-    console.log("current state", state)
+    console.log("current state", state);
     const result = CampaignBudgetSchema.safeParse({ budget: state.budget, bid_value: state.bid_value });
     console.log("validation result", result)
     if (!result.success) {
@@ -61,7 +61,10 @@ export default function BudgetBid({ isActive, isDisabled, onToggle }: Props) {
     state.geo_exclude = state.geo_exclude.map((loc) => { return { canonicalName: loc.canonicalName, geoId: loc.geoTargetConstant, source: loc.source } });
     // @ts-ignore
     state.mobile_carriers = state.mobile_carriers.map((carrier) => carrier.resourceName);
-
+    // @ts-ignore
+    state.advtrackinglink = state.app_store_url;
+    // @ts-ignore
+    state.tracking_url = state.url;
     try {
 
       const apiResponse: any = await createCampaignAction(state);
@@ -70,15 +73,16 @@ export default function BudgetBid({ isActive, isDisabled, onToggle }: Props) {
 
 
       if (apiResponse?.success) {
-        const campaignId = apiResponse.response.id;
+        const campaignId = apiResponse.response.campaign.id;
         showToast('Campaign created successfully', 'success');
-        router.push(`/admin/campaign/create/creatives?id=${campaignId}`)
+        router.push(`/admin/campaign/create/creatives?id=${campaignId}&type=${state.campaign_type}`)
       } else {
         // @ts-ignore
         showToast(apiResponse?.message || 'Something went wrong', 'error');
       }
 
     } catch (error) {
+      console.log("error came", error)
       showToast((error as Error)?.message || 'Something went wrong', 'error');
     } finally {
       setIsLoading(false)
@@ -165,7 +169,7 @@ export default function BudgetBid({ isActive, isDisabled, onToggle }: Props) {
               type='number'
               label="Amount $"
               name="bid_value"
-              value={state.bid_value || ''}
+              value={state.bid_value}
               onChange={handleChange}
               className="mb-[24px]"
               placeholder="Amount"

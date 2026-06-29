@@ -24,7 +24,7 @@ export default function InvoicesPage() {
   const [data, setData] = useState<InvoiceItem[]>(
     Array.from({ length: 12 }).map((_, i) => ({
       id: i + 1,
-      date: 'Aug, 2022',
+      date: 'Dec, 2025',
       invoiceId: `IN22400${100 + i}`,
       amount: 38.64,
       checked: false,

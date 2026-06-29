@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import CheckIcon from '@mui/icons-material/Check';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
+import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
 
 interface TableProps {
   loading?: boolean;
@@ -16,6 +18,8 @@ interface TableProps {
   order?: 'asc' | 'desc' | '';
   onSortChange?: (sort: string, order: 'asc' | 'desc' | '') => void;
   onRowClick?: (row: any) => void;
+  onEdit?: (row: any) => void;
+
 }
 
 export default function Table({
@@ -30,6 +34,8 @@ export default function Table({
   order,
   onSortChange,
   onRowClick,
+  onEdit,
+
 }: TableProps) {
   const handleSort = (key: string) => {
     if (!onSortChange) return;
@@ -70,6 +76,12 @@ export default function Table({
               <div className="flex items-center gap-1">
                 {c.label}
 
+                {c.sortable && sortKey != c.key && (
+                  <>
+                    <UnfoldMoreIcon sx={{ fontSize: 12 }} />
+                  </>
+                )}
+
                 {c.sortable && sortKey === c.key && (
                   <>
                     {order === 'asc' && (
@@ -82,65 +94,88 @@ export default function Table({
                 )}
               </div>
             </th>
+
           ))}
+
+          {onEdit && (
+            <th className="py-[12px] px-[16px] text-right">
+              Actions
+            </th>
+          )}
+
         </tr>
       </thead>
 
       <tbody>
         {
-        
-        loading ? (
-        <tr>
-          <td
-            colSpan={columns.length + 1}
-            className="py-[32px] text-center text-[12px] text-[#8E8E93]"
-          >
-            Loading...
-          </td>
-        </tr>
-        ) : data.length === 0 ? (
-          <tr>
-            <td
-              colSpan={columns.length + 1}
-              className="py-[32px] text-center text-[12px] text-[#8E8E93]"
-            >
-              {emptyText || 'No records found'}
-            </td>
-          </tr>
-        ) : (
-          data.map((row) => (
-            <tr
-              key={row.id}
-              onClick={() => onRowClick?.(row)}
-              className={`group border-b border-[#E5E5EA] transition text-[11px] text-[#242424]
+
+          loading ? (
+            <tr>
+              <td
+                colSpan={columns.length + 1 + (onEdit ? 1 : 0)} className="py-[32px] text-center text-[12px] text-[#8E8E93]"
+              >
+                Loading...
+              </td>
+            </tr>
+          ) : data.length === 0 ? (
+            <tr>
+              <td
+                colSpan={columns.length + 1 + (onEdit ? 1 : 0)} className="py-[32px] text-center text-[12px] text-[#8E8E93]"
+              >
+                {emptyText || 'No records found'}
+              </td>
+            </tr>
+          ) : (
+            data.map((row) => (
+              <tr
+                key={row.id}
+                onClick={() => onRowClick?.(row)}
+                className={`group border-b border-[#E5E5EA] transition text-[11px] text-[#242424]
     ${row.checked ? 'bg-[#F3FAFF]' : 'hover:bg-[#F8F8FA]'}
     ${onRowClick ? 'cursor-pointer' : ''}
   `}
-            >
-              <td className="py-[12px] px-[16px]">
-                <label className="checkbox-wrapper">
-                  <input
-                    type="checkbox"
-                    checked={row.checked}
-                    onChange={() => toggleRow(row.id)}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  {row.checked && (
-                    <CheckIcon sx={{ fontSize: 10, color: '#fff' }} />
-                  )}
-                </label>
-              </td>
-
-              {columns.map((c) => (
-                <td key={c.key} className="py-[12px] px-[16px]">
-                  {c.custom && customRender
-                    ? customRender(row, c.key)
-                    : row[c.key]}
+              >
+                <td className="py-[12px] px-[16px]">
+                  <label className="checkbox-wrapper">
+                    <input
+                      type="checkbox"
+                      checked={row.checked}
+                      onChange={() => toggleRow(row.id)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    {row.checked && (
+                      <CheckIcon sx={{ fontSize: 10, color: '#fff' }} />
+                    )}
+                  </label>
                 </td>
-              ))}
-            </tr>
-          ))
-        )}
+
+                {columns.map((c) => (
+                  <td key={c.key} className="py-[12px] px-[16px]">
+                    {c.custom && customRender
+                      ? customRender(row, c.key)
+                      : row[c.key]}
+                  </td>
+                ))}
+
+                {onEdit && (
+                  <td className="py-[12px] px-[16px] text-right">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(row);
+                      }}
+                      className="p-1 hover:bg-gray-100 rounded cursor-pointer"
+                    >
+                      <DriveFileRenameOutlineIcon sx={{
+                        fontSize: 18, color: '#55868c',
+                      }} />
+                    </button>
+                  </td>
+                )}
+
+              </tr>
+            ))
+          )}
       </tbody>
     </table>
   );
