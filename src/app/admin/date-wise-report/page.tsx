@@ -3,13 +3,6 @@ import SpecialReport from './StaticReport';
 import { getProfileAction } from '@/actions/profile.actions';
 
 export default async function ReportPage() {
-  const result = await getProfileAction();
-
-  const user = result.success ? (result as any).data.user : null;
-
-  if (user?.email === 'supportdemo@collectcent.com') {
-    return <SpecialReport />;
-  }
 
   return <Report />;
 }

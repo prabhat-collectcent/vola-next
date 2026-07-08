@@ -2,29 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-
-const navItems = [
-  {
-    label: 'Dashboard',
-    icon: '/dashboard-icon.svg',
-    href: '/admin/dashboard',
-  },
-  {
-    label: 'Campaigns',
-    icon: '/campaign-icon.svg',
-    href: '/admin/campaign',
-  },
-  {
-    label: 'Reports',
-    icon: '/report-icon.svg',
-    href: '/admin/report',
-  },
-  {
-    label: 'Payments',
-    icon: '/payment-icon.svg',
-    href: '/admin/payment',
-  },
-];
+import { getProfileAction } from '@/actions/profile.actions';
+import { useToast } from '../toast/ToastProvider';
 
 export default function Sidebar({
   isOpen,
@@ -37,6 +16,53 @@ export default function Sidebar({
   const [collapsed, setCollapsed] = useState(false);
   const [hoverLogo, setHoverLogo] = useState(false);
   const [collapseLocked, setCollapseLocked] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    async function fetchUserProfile() {
+      const result = await getProfileAction();
+      if (result.success) {
+        const userData = (result as any).data.user;
+        setUser(userData);
+      } else {
+        showToast(result.message || 'Failed to fetch user profile', 'error');
+      }
+    }
+    fetchUserProfile();
+  }, []);
+
+  const navItems = [
+    {
+      label: 'Dashboard',
+      icon: '/dashboard-icon.svg',
+      href: '/admin/dashboard',
+    },
+    {
+      label: 'Campaigns',
+      icon: '/campaign-icon.svg',
+      href: '/admin/campaign',
+    },
+    {
+      label: 'Reports',
+      icon: '/report-icon.svg',
+      href: '/admin/report',
+    },
+    ...(user?.email === 'supportdemo@collectcent.com'
+      ? [
+          {
+            label: 'Date Wise Reports',
+            icon: '/report-icon.svg',
+            href: '/admin/date-wise-report',
+          },
+        ]
+      : []),
+    {
+      label: 'Payments',
+      icon: '/payment-icon.svg',
+      href: '/admin/payment',
+    },
+  ];
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : 'auto';

@@ -1,6 +1,6 @@
 'use server';
 
-import { createCampaign, editCampaignCreative, editCreativePayload, getAd, getCampaignById, getCampaignReport, getCampaigns, getCampaignsParams, getMonthlyStats, getReports, getReportsParams, getSiteReportsParams, getSiteWiseReports, getStatisticsOverview, getStatisticsOverviewParams, getTotalStats, getTotalStatsParams, updateCampaignBasic, updateCampaignBasicPayload, updateCampaignDemographyPayload, updateCampaignDemographyTargeting, updateCampaignGeoTargeting, updateCampaignGeoTargetingPayload, updateCampaignMiscellaneousTargeting, updateCampaignSchedule, updateCampaignSchedulePayload, updateMiscellaneousPayload, uploadCreativePayload, uploadCreatives } from "@/services/campaign.service";
+import { createCampaign, editCampaignCreative, editCreativePayload, getAd, getCampaignById, getCampaignReport, getCampaigns, getCampaignsParams, getDateWiseReports, getGoogleReports, getMonthlyStats, getReports, getReportsParams, getSiteReportsParams, getSiteWiseReports, getStatisticsOverview, getStatisticsOverviewParams, getTotalStats, getTotalStatsParams, updateCampaignBasic, updateCampaignBasicPayload, updateCampaignDemographyPayload, updateCampaignDemographyTargeting, updateCampaignGeoTargeting, updateCampaignGeoTargetingPayload, updateCampaignMiscellaneousTargeting, updateCampaignSchedule, updateCampaignSchedulePayload, updateMiscellaneousPayload, uploadCreativePayload, uploadCreatives } from "@/services/campaign.service";
 
 export async function createCampaignAction(payload: any) {
 
@@ -80,6 +80,19 @@ export async function getReportsAction(params: getReportsParams){
   const result = await getReports(params);
   return result;
 }
+
+export async function getGoogleReportsAction(params: getReportsParams){
+  const result = await getGoogleReports(params);
+  return result;
+}
+
+export async function getDateWiseReportsAction(params: getReportsParams){
+  const result = await getDateWiseReports(params);
+  return result;
+}
+
+
+
 
 export async function getSiteWiseDataAction(params: getSiteReportsParams) {
   const result = await getSiteWiseReports(params);

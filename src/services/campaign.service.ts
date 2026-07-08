@@ -151,6 +151,20 @@ export const getReports = async (params?: getReportsParams) => apiRequest(() =>
     })
 );
 
+export const getGoogleReports = async (params?: getReportsParams) => apiRequest(() =>
+    api.get("/api/google-reports", {
+        params, // automatically converts to query string
+    })
+);
+
+export const getDateWiseReports = async (params?: getReportsParams) => apiRequest(() =>
+    api.get("/api/daily-reports", {
+        params, // automatically converts to query string
+    })
+);
+
+
+
 export const getSiteWiseReports = async (params?: getSiteReportsParams) => apiRequest(() =>
     api.get("/api/reports/site-wise", {
         params,

@@ -35,6 +35,7 @@ export default function Page() {
 <link href="assets/css/style.css" rel="stylesheet">
 <link href="assets/js/script.js">
 
+
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <!-- Swiper CSS -->
